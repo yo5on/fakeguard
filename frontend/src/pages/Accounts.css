@@ -1,0 +1,111 @@
+.accounts {
+  padding: var(--spacing-xl) 0;
+}
+
+.accounts h1 {
+  margin-bottom: var(--spacing-xl);
+}
+
+.accounts-controls {
+  margin-bottom: var(--spacing-xl);
+}
+
+.controls-row {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.search-input,
+.filter-select {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 1rem;
+}
+
+.search-input {
+  max-width: 400px;
+}
+
+.filter-select {
+  max-width: 200px;
+}
+
+.import-section {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.file-name {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.import-message {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: #dbeafe;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+}
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sortable:hover {
+  background: var(--color-background);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-xl);
+}
+
+.pagination-info {
+  color: var(--color-text-secondary);
+}
+
+.btn-link {
+  color: var(--color-primary);
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+  .controls-row {
+    flex-direction: column;
+  }
+
+  .search-input,
+  .filter-select {
+    max-width: 100%;
+  }
+
+  .import-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+
+  table {
+    min-width: 800px;
+  }
+
+  .pagination {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+}
