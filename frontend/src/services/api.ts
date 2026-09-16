@@ -9,7 +9,7 @@ import {
   ImportResult,
 } from '../types';
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const API_BASE = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api';
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
