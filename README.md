@@ -1,6 +1,6 @@
 # FakeGuard - Social Media Account Risk Analyzer
 
-**Problem Statement:** PS14 – Fake Social Media Account Risk Analyzer
+**Event:** Tech Utsav
 
 A full-stack prototype system for analyzing synthetic social media account data to identify potential risk indicators and prioritize manual review.
 
@@ -40,7 +40,7 @@ FakeGuard is a decision-support tool that helps human reviewers prioritize their
 
 ### Project Structure
 
-```
+```text
 fakeguard/
 ├── frontend/          # React frontend
 │   ├── src/
@@ -233,7 +233,7 @@ The system includes 1,000+ synthetic accounts covering:
 - `GET /api/config/scoring` - Get scoring methodology
 - `GET /api/health` - Health check
 
-## 🎭 SIH Demo Workflow
+## 🎭 Tech Utsav Demo Workflow
 
 1. **Start with Dashboard:** Show overall statistics and risk distribution
 2. **Navigate to Analyzer:** Demonstrate live analysis with example inputs
@@ -293,17 +293,17 @@ FakeGuard is a decision-support tool. All risk assessments require human review.
 - CORS configuration
 - Rate limiting (recommended for production)
 
-## 📄 License
+## 📄 Event
 
-This is a prototype developed for Smart India Hackathon 2024.
+Developed for **Tech Utsav** as a college hackathon project.
 
 ## 👥 Team
 
-[Add your team information here]
+Developed as a team project for Tech Utsav.
 
 ## 📞 Contact
 
-[Add contact information here]
+For questions or feedback, please open an issue in this repository.
 
 ---
 
