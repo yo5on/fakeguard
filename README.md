@@ -1,6 +1,14 @@
-# FakeGuard - Social Media Account Risk Analyzer
+<div align="center">
 
-**Event:** Tech Utsav
+<img src="https://raw.githubusercontent.com/yo5on/yo5on/main/hd-projects.svg" width="620" alt="projects"/>
+
+<samp><b>FAKEGUARD — SOCIAL MEDIA ACCOUNT RISK ANALYZER</b></samp>
+
+<samp>python · fastapi · react · typescript · ai/ml</samp>
+
+</div>
+
+---
 
 A full-stack prototype system for analyzing synthetic social media account data to identify potential risk indicators and prioritize manual review.
 
@@ -106,7 +114,7 @@ cd backend
 2. Create virtual environment:
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\\Scripts\\activate
 ```
 
 3. Install dependencies:
