@@ -10,7 +10,7 @@
 
 ---
 
-<samp>A full-stack prototype system for analyzing synthetic social media account data to identify potential risk indicators and prioritize manual review.</samp>
+<div align="center"><samp>A full-stack prototype system for analyzing synthetic social media account data to identify potential risk indicators and prioritize manual review.</samp></div>
 
 ---
 
