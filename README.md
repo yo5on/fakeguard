@@ -10,43 +10,46 @@
 
 ---
 
-A full-stack prototype system for analyzing synthetic social media account data to identify potential risk indicators and prioritize manual review.
+<samp>A full-stack prototype system for analyzing synthetic social media account data to identify potential risk indicators and prioritize manual review.</samp>
 
-## 🎯 Overview
+---
 
-FakeGuard is a decision-support tool that helps human reviewers prioritize their work by analyzing social media account profiles and activity patterns. It provides:
+<div align="center"><samp><b>Project Overview</b></samp></div>
 
-- **Explainable risk scoring** from 0-100
-- **Four risk categories:** LOW, MEDIUM, HIGH, CRITICAL
-- **Feature-by-feature breakdown** showing how each metric contributes
-- **Reason codes** explaining specific risk indicators
-- **Dashboard analytics** for reviewing account populations
-- **CSV import** for batch processing
+<samp>FakeGuard is a decision-support tool that helps human reviewers prioritize their work by analyzing social media account profiles and activity patterns. It provides:</samp>
 
-**Important:** This is a prototype using synthetic data for demonstration purposes. It does NOT:
-- Access real social media platforms
-- Make final determinations about account authenticity
-- Replace human review
+- <samp><b>Explainable risk scoring</b> from 0-100</samp>
+- <samp><b>Four risk categories:</b> LOW, MEDIUM, HIGH, CRITICAL</samp>
+- <samp><b>Feature-by-feature breakdown</b> showing how each metric contributes</samp>
+- <samp><b>Reason codes</b> explaining specific risk indicators</samp>
+- <samp><b>Dashboard analytics</b> for reviewing account populations</samp>
+- <samp><b>CSV import</b> for batch processing</samp>
 
-## 🏗️ Architecture
+<samp><b>Important:</b> This is a prototype using synthetic data for demonstration purposes. It does not access real social media platforms, make final determinations about account authenticity, or replace human review.</samp>
 
-### Tech Stack
+---
 
-**Frontend:**
-- React 18 + TypeScript
-- Vite
-- React Router
-- Recharts
-- CSS Modules
+<div align="center"><samp><b>Architecture</b></samp></div>
 
-**Backend:**
-- Python 3.11+
-- FastAPI
-- SQLAlchemy
-- Pandas
-- SQLite
+<samp><b>Tech Stack</b></samp>
 
-### Project Structure
+<samp><b>Frontend</b></samp>
+
+- <samp>React 18 + TypeScript</samp>
+- <samp>Vite</samp>
+- <samp>React Router</samp>
+- <samp>Recharts</samp>
+- <samp>CSS Modules</samp>
+
+<samp><b>Backend</b></samp>
+
+- <samp>Python 3.11+</samp>
+- <samp>FastAPI</samp>
+- <samp>SQLAlchemy</samp>
+- <samp>Pandas</samp>
+- <samp>SQLite</samp>
+
+<samp><b>Project Structure</b></samp>
 
 ```text
 fakeguard/
@@ -58,7 +61,6 @@ fakeguard/
 │   │   ├── types/
 │   │   └── styles/
 │   └── package.json
-│
 ├── backend/           # FastAPI backend
 │   ├── app/
 │   │   ├── routes/
@@ -69,250 +71,279 @@ fakeguard/
 │   ├── data/
 │   ├── tests/
 │   └── requirements.txt
-│
 └── docs/
 ```
 
-## 📊 Scoring Methodology
+---
 
-### Feature Weights
+<div align="center"><samp><b>Scoring Methodology</b></samp></div>
+
+<samp><b>Feature Weights</b></samp>
 
 | Feature | Weight | Description |
-|---------|--------|-------------|
-| Account Age | 20% | How long the account has existed |
-| Follower/Following Ratio | 25% | Relationship between followers and following |
-| Posting Frequency | 20% | Average posts per day |
-| Profile Completeness | 15% | How complete the profile information is |
-| Engagement | 20% | Average likes and comments relative to followers |
+|---|---:|---|
+| <samp>Account Age</samp> | <samp>20%</samp> | <samp>How long the account has existed</samp> |
+| <samp>Follower/Following Ratio</samp> | <samp>25%</samp> | <samp>Relationship between followers and following</samp> |
+| <samp>Posting Frequency</samp> | <samp>20%</samp> | <samp>Average posts per day</samp> |
+| <samp>Profile Completeness</samp> | <samp>15%</samp> | <samp>How complete the profile information is</samp> |
+| <samp>Engagement</samp> | <samp>20%</samp> | <samp>Average likes and comments relative to followers</samp> |
 
-### Risk Categories
+<samp><b>Risk Categories</b></samp>
 
-- **LOW (0-29.9):** No immediate action
-- **MEDIUM (30-59.9):** Monitor account
-- **HIGH (60-79.9):** Manual review recommended
-- **CRITICAL (80-100):** Priority investigation
+- <samp><b>LOW (0-29.9):</b> No immediate action</samp>
+- <samp><b>MEDIUM (30-59.9):</b> Monitor account</samp>
+- <samp><b>HIGH (60-79.9):</b> Manual review recommended</samp>
+- <samp><b>CRITICAL (80-100):</b> Priority investigation</samp>
 
-### Missing Data Handling
+<samp><b>Missing Data Handling</b></samp>
 
-When metrics cannot be calculated (e.g., engagement when followers = 0), the feature is marked unavailable and the remaining features are renormalized. This prevents artificially inflating risk scores due to missing data.
+<samp>When metrics cannot be calculated (e.g., engagement when followers = 0), the feature is marked unavailable and the remaining features are renormalized. This prevents artificially inflating risk scores due to missing data.</samp>
 
-## 🚀 Getting Started
+---
 
-### Prerequisites
+<div align="center"><samp><b>Getting Started</b></samp></div>
 
-- Python 3.11+
-- Node.js 18+
-- Git
+<samp><b>Prerequisites</b></samp>
 
-### Backend Setup
+- <samp>Python 3.11+</samp>
+- <samp>Node.js 18+</samp>
+- <samp>Git</samp>
 
-1. Navigate to backend directory:
+<samp><b>Backend Setup</b></samp>
+
+1. <samp>Navigate to backend directory:</samp>
+
 ```bash
 cd backend
 ```
 
-2. Create virtual environment:
+2. <samp>Create virtual environment:</samp>
+
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\\Scripts\\activate
 ```
 
-3. Install dependencies:
+3. <samp>Install dependencies:</samp>
+
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Generate synthetic data:
+4. <samp>Generate synthetic data:</samp>
+
 ```bash
 python scripts/generate_synthetic_data.py
 ```
 
-5. Run the server:
+5. <samp>Run the server:</samp>
+
 ```bash
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-API will be available at http://localhost:8000
-API documentation at http://localhost:8000/docs
+<samp>API: http://localhost:8000</samp>
 
-### Frontend Setup
+<samp>API documentation: http://localhost:8000/docs</samp>
 
-1. Navigate to frontend directory:
+<samp><b>Frontend Setup</b></samp>
+
 ```bash
 cd frontend
-```
-
-2. Install dependencies:
-```bash
 npm install
-```
-
-3. Run development server:
-```bash
 npm run dev
 ```
 
-Frontend will be available at http://localhost:5173
+<samp>Frontend: http://localhost:5173</samp>
 
-### Running Tests
+<samp><b>Running Tests</b></samp>
 
-Backend tests:
 ```bash
 cd backend
 pytest
 ```
 
-Frontend build:
+<samp><b>Frontend Build</b></samp>
+
 ```bash
 cd frontend
 npm run build
 ```
 
-## 📱 Features
+---
 
-### Dashboard
-- Total account statistics
-- Risk category distribution
-- Risk distribution pie chart
-- Top priority accounts table
+<div align="center"><samp><b>Features</b></samp></div>
 
-### Analyzer
-- Real-time account analysis
-- Interactive form with validation
-- Risk gauge visualization
-- Feature-by-feature breakdown
-- Reason codes with explanations
+<samp><b>Dashboard</b></samp>
 
-### Accounts
-- Paginated account list
-- Search by username
-- Filter by risk category
-- Sortable columns
-- CSV bulk import
-- View individual account details
+- <samp>Total account statistics</samp>
+- <samp>Risk category distribution</samp>
+- <samp>Risk distribution pie chart</samp>
+- <samp>Top priority accounts table</samp>
 
-### Account Details
-- Complete account information
-- Latest analysis results
-- Re-analyze functionality
-- Historical analysis tracking
+<samp><b>Analyzer</b></samp>
 
-### Scoring Methodology
-- Feature weights and thresholds
-- Risk category definitions
-- Reason code explanations
-- Missing data handling
-- Important disclaimers
+- <samp>Real-time account analysis</samp>
+- <samp>Interactive form with validation</samp>
+- <samp>Risk gauge visualization</samp>
+- <samp>Feature-by-feature breakdown</samp>
+- <samp>Reason codes with explanations</samp>
 
-## 🧪 Synthetic Dataset
+<samp><b>Accounts</b></samp>
 
-The system includes 1,000+ synthetic accounts covering:
+- <samp>Paginated account list</samp>
+- <samp>Search by username</samp>
+- <samp>Filter by risk category</samp>
+- <samp>Sortable columns</samp>
+- <samp>CSV bulk import</samp>
+- <samp>View individual account details</samp>
 
-- **Normal accounts (400):** Typical legitimate users
-- **New legitimate accounts (150):** Recently created but authentic
-- **Suspicious accounts (200):** Bot-like behavior patterns
-- **Influencers (100):** High-engagement legitimate accounts
-- **Bot-like accounts (80):** Obvious automation patterns
-- **Incomplete profiles (40):** Missing information
-- **Low engagement (30):** Legitimate but inactive
-- **Edge cases (6):** Zero followers, zero following, etc.
+<samp><b>Account Details</b></samp>
 
-## 📖 API Endpoints
+- <samp>Complete account information</samp>
+- <samp>Latest analysis results</samp>
+- <samp>Re-analyze functionality</samp>
+- <samp>Historical analysis tracking</samp>
 
-### Analysis
-- `POST /api/analyze` - Analyze new account
-- `POST /api/accounts/{id}/analyze` - Analyze existing account
-- `GET /api/accounts/{id}/analysis` - Get analysis history
+<samp><b>Scoring Methodology</b></samp>
 
-### Accounts
-- `GET /api/accounts` - List accounts (pagination, search, filter, sort)
-- `GET /api/accounts/{id}` - Get specific account
-- `POST /api/accounts` - Create account
-
-### Dashboard
-- `GET /api/dashboard/summary` - Dashboard statistics
-- `GET /api/dashboard/distribution` - Risk distribution
-- `GET /api/dashboard/top-risk` - High-risk accounts
-
-### Import
-- `POST /api/import/csv` - Import accounts from CSV
-
-### Configuration
-- `GET /api/config/scoring` - Get scoring methodology
-- `GET /api/health` - Health check
-
-## 🎭 Tech Utsav Demo Workflow
-
-1. **Start with Dashboard:** Show overall statistics and risk distribution
-2. **Navigate to Analyzer:** Demonstrate live analysis with example inputs
-3. **Analyze normal account:** Show LOW risk result
-4. **Analyze suspicious account:** Show HIGH/CRITICAL risk with reason codes
-5. **Analyze edge case:** Demonstrate zero followers handling
-6. **View Accounts page:** Show search, filter, and sort functionality
-7. **View Account Details:** Deep dive into specific account analysis
-8. **Show Methodology page:** Explain scoring system to judges
-9. **Discuss human-in-the-loop:** Emphasize decision support, not automation
-10. **Mention future scope:** ML integration, additional signals, etc.
-
-## ⚠️ Important Disclaimers
-
-### Prototype Nature
-The scoring weights and thresholds are prototype heuristics intended for demonstration and evaluation. They are not official government, law-enforcement, or social-media-platform standards.
-
-### Synthetic Data Only
-This prototype uses entirely synthetic/demo data. It does NOT:
-- Scrape real social media platforms
-- Access real user data
-- Implement authentication bypass
-- Violate platform terms of service
-
-### Human Review Required
-FakeGuard is a decision-support tool. All risk assessments require human review. The system:
-- Does NOT make final determinations
-- Does NOT replace human judgment
-- Does NOT take automated punitive actions
-
-## 🔮 Future Scope
-
-### Machine Learning Integration
-- Isolation Forest for anomaly detection
-- Behavioral pattern clustering
-- Temporal analysis
-- Network analysis
-
-### Additional Signals
-- Content quality analysis
-- Interaction patterns
-- Time-based behavioral signals
-- Cross-platform correlation
-
-### Enhanced Capabilities
-- Real-time monitoring
-- Automated alert system
-- Explainable AI integration
-- Multi-language support
-
-## 🛡️ Security Considerations
-
-- Input validation on all endpoints
-- No sensitive data exposure
-- Proper error handling
-- SQL injection prevention
-- CORS configuration
-- Rate limiting (recommended for production)
-
-## 📄 Event
-
-Developed for **Tech Utsav** as a college hackathon project.
-
-## 👥 Team
-
-Developed as a team project for Tech Utsav.
-
-## 📞 Contact
-
-For questions or feedback, please open an issue in this repository.
+- <samp>Feature weights and thresholds</samp>
+- <samp>Risk category definitions</samp>
+- <samp>Reason code explanations</samp>
+- <samp>Missing data handling</samp>
+- <samp>Important disclaimers</samp>
 
 ---
 
-**Remember:** This tool assists human reviewers. Final decisions about account authenticity must be made by trained personnel with appropriate legal authority and due process.
+<div align="center"><samp><b>Synthetic Dataset</b></samp></div>
+
+<samp>The system includes 1,000+ synthetic accounts covering:</samp>
+
+- <samp><b>Normal accounts (400):</b> Typical legitimate users</samp>
+- <samp><b>New legitimate accounts (150):</b> Recently created but authentic</samp>
+- <samp><b>Suspicious accounts (200):</b> Bot-like behavior patterns</samp>
+- <samp><b>Influencers (100):</b> High-engagement legitimate accounts</samp>
+- <samp><b>Bot-like accounts (80):</b> Obvious automation patterns</samp>
+- <samp><b>Incomplete profiles (40):</b> Missing information</samp>
+- <samp><b>Low engagement (30):</b> Legitimate but inactive</samp>
+- <samp><b>Edge cases (6):</b> Zero followers, zero following, etc.</samp>
+
+---
+
+<div align="center"><samp><b>API Endpoints</b></samp></div>
+
+<samp><b>Analysis</b></samp>
+
+- <samp><code>POST /api/analyze</code> — Analyze new account</samp>
+- <samp><code>POST /api/accounts/{id}/analyze</code> — Analyze existing account</samp>
+- <samp><code>GET /api/accounts/{id}/analysis</code> — Get analysis history</samp>
+
+<samp><b>Accounts</b></samp>
+
+- <samp><code>GET /api/accounts</code> — List accounts (pagination, search, filter, sort)</samp>
+- <samp><code>GET /api/accounts/{id}</code> — Get specific account</samp>
+- <samp><code>POST /api/accounts</code> — Create account</samp>
+
+<samp><b>Dashboard</b></samp>
+
+- <samp><code>GET /api/dashboard/summary</code> — Dashboard statistics</samp>
+- <samp><code>GET /api/dashboard/distribution</code> — Risk distribution</samp>
+- <samp><code>GET /api/dashboard/top-risk</code> — High-risk accounts</samp>
+
+<samp><b>Import</b></samp>
+
+- <samp><code>POST /api/import/csv</code> — Import accounts from CSV</samp>
+
+<samp><b>Configuration</b></samp>
+
+- <samp><code>GET /api/config/scoring</code> — Get scoring methodology</samp>
+- <samp><code>GET /api/health</code> — Health check</samp>
+
+---
+
+<div align="center"><samp><b>Tech Utsav Demo Workflow</b></samp></div>
+
+1. <samp><b>Start with Dashboard:</b> Show overall statistics and risk distribution</samp>
+2. <samp><b>Navigate to Analyzer:</b> Demonstrate live analysis with example inputs</samp>
+3. <samp><b>Analyze normal account:</b> Show LOW risk result</samp>
+4. <samp><b>Analyze suspicious account:</b> Show HIGH/CRITICAL risk with reason codes</samp>
+5. <samp><b>Analyze edge case:</b> Demonstrate zero followers handling</samp>
+6. <samp><b>View Accounts page:</b> Show search, filter, and sort functionality</samp>
+7. <samp><b>View Account Details:</b> Deep dive into specific account analysis</samp>
+8. <samp><b>Show Methodology page:</b> Explain scoring system to judges</samp>
+9. <samp><b>Discuss human-in-the-loop:</b> Emphasize decision support, not automation</samp>
+10. <samp><b>Mention future scope:</b> ML integration, additional signals, etc.</samp>
+
+---
+
+<div align="center"><samp><b>Important Disclaimers</b></samp></div>
+
+<samp><b>Prototype Nature</b></samp>
+
+<samp>The scoring weights and thresholds are prototype heuristics intended for demonstration and evaluation. They are not official government, law-enforcement, or social-media-platform standards.</samp>
+
+<samp><b>Synthetic Data Only</b></samp>
+
+<samp>This prototype uses entirely synthetic/demo data. It does not scrape real social media platforms, access real user data, implement authentication bypass, or violate platform terms of service.</samp>
+
+<samp><b>Human Review Required</b></samp>
+
+<samp>FakeGuard is a decision-support tool. All risk assessments require human review. The system does not make final determinations, replace human judgment, or take automated punitive actions.</samp>
+
+---
+
+<div align="center"><samp><b>Future Scope</b></samp></div>
+
+<samp><b>Machine Learning Integration</b></samp>
+
+- <samp>Isolation Forest for anomaly detection</samp>
+- <samp>Behavioral pattern clustering</samp>
+- <samp>Temporal analysis</samp>
+- <samp>Network analysis</samp>
+
+<samp><b>Additional Signals</b></samp>
+
+- <samp>Content quality analysis</samp>
+- <samp>Interaction patterns</samp>
+- <samp>Time-based behavioral signals</samp>
+- <samp>Cross-platform correlation</samp>
+
+<samp><b>Enhanced Capabilities</b></samp>
+
+- <samp>Real-time monitoring</samp>
+- <samp>Automated alert system</samp>
+- <samp>Explainable AI integration</samp>
+- <samp>Multi-language support</samp>
+
+---
+
+<div align="center"><samp><b>Security Considerations</b></samp></div>
+
+- <samp>Input validation on all endpoints</samp>
+- <samp>No sensitive data exposure</samp>
+- <samp>Proper error handling</samp>
+- <samp>SQL injection prevention</samp>
+- <samp>CORS configuration</samp>
+- <samp>Rate limiting (recommended for production)</samp>
+
+---
+
+<div align="center"><samp><b>Event</b></samp></div>
+
+<samp>Developed for <b>Tech Utsav</b> as a college hackathon project.</samp>
+
+---
+
+<div align="center"><samp><b>Team</b></samp></div>
+
+<samp>Developed as a team project for Tech Utsav.</samp>
+
+---
+
+<div align="center"><samp><b>Contact</b></samp></div>
+
+<samp>For questions or feedback, please open an issue in this repository.</samp>
+
+---
+
+<samp><b>Remember:</b> This tool assists human reviewers. Final decisions about account authenticity must be made by trained personnel with appropriate legal authority and due process.</samp>
