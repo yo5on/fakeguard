@@ -10,8 +10,8 @@ export default function RiskBreakdown({ features }: RiskBreakdownProps) {
     <div className="risk-breakdown">
       <h3>Feature Risk Breakdown</h3>
       <div className="breakdown-list">
-        {features.map((feature, index) => (
-          <div key={index} className="breakdown-item">
+        {features.map((feature) => (
+          <div key={feature.feature} className="breakdown-item">
             <div className="breakdown-header">
               <span className="feature-name">{feature.feature}</span>
               {!feature.available && (
@@ -30,7 +30,14 @@ export default function RiskBreakdown({ features }: RiskBreakdownProps) {
                   </span>
                 </div>
                 
-                <div className="progress-bar">
+                <div
+                  className="progress-bar"
+                  role="progressbar"
+                  aria-label={`${feature.feature} risk`}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round(feature.risk_score)}
+                >
                   <div
                     className="progress-fill"
                     style={{

@@ -54,13 +54,34 @@
   font-size: 0.875rem;
 }
 
-.sortable {
+.import-message-error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.import-errors {
+  margin: var(--spacing-sm) 0 0;
+  padding-left: var(--spacing-lg);
+}
+
+/* Keyboard focus on the hidden file input highlights its visible label. */
+#csv-upload:focus-visible + label {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.sort-button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
   cursor: pointer;
   user-select: none;
 }
 
-.sortable:hover {
-  background: var(--color-background);
+.sort-button:hover {
+  color: var(--color-primary);
 }
 
 .pagination {

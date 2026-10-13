@@ -1,19 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
+import { ScoringConfig } from '../types';
 import LoadingState from '../components/LoadingState';
 import ErrorState from '../components/ErrorState';
 import './ScoringMethodology.css';
 
 export default function ScoringMethodology() {
-  const [config, setConfig] = useState<any>(null);
+  const [config, setConfig] = useState<ScoringConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadConfig();
-  }, []);
-
-  const loadConfig = async () => {
+  const loadConfig = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -24,7 +21,11 @@ export default function ScoringMethodology() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadConfig();
+  }, [loadConfig]);
 
   if (loading) return <LoadingState />;
   if (error) return <ErrorState message={error} onRetry={loadConfig} />;
@@ -44,7 +45,7 @@ export default function ScoringMethodology() {
             <h2>Feature Weights</h2>
             <p>Each feature contributes to the final risk score based on its assigned weight:</p>
             <div className="weights-grid">
-              {Object.entries(config.features).map(([key, feature]: [string, any]) => (
+              {Object.entries(config.features).map(([key, feature]) => (
                 <div key={key} className="weight-item">
                   <div className="weight-header">
                     <span className="feature-name">{formatFeatureName(key)}</span>
@@ -52,7 +53,7 @@ export default function ScoringMethodology() {
                   </div>
                   {feature.thresholds && (
                     <div className="thresholds">
-                      {Object.entries(feature.thresholds).map(([range, risk]: [string, any]) => (
+                      {Object.entries(feature.thresholds).map(([range, risk]) => (
                         <div key={range} className="threshold-item">
                           <span className="range">{range}</span>
                           <span className="risk">→ Risk: {risk}</span>
@@ -74,7 +75,7 @@ export default function ScoringMethodology() {
             <h2>Risk Categories</h2>
             <p>Final risk scores are classified into four categories:</p>
             <div className="categories-grid">
-              {Object.entries(config.categories).map(([category, info]: [string, any]) => (
+              {Object.entries(config.categories).map(([category, info]) => (
                 <div key={category} className={`category-item category-${category.toLowerCase()}`}>
                   <span className={`badge badge-${category.toLowerCase()}`}>{category}</span>
                   <span className="category-range">Score: {info.range}</span>
@@ -88,7 +89,7 @@ export default function ScoringMethodology() {
             <h2>Reason Codes</h2>
             <p>When risk indicators are detected, the system generates reason codes:</p>
             <div className="reason-codes">
-              {Object.entries(config.reason_codes).map(([code, description]: [string, any]) => (
+              {Object.entries(config.reason_codes).map(([code, description]) => (
                 <div key={code} className="reason-code-item">
                   <span className="code">{code}</span>
                   <span className="description">{description}</span>
@@ -112,7 +113,7 @@ export default function ScoringMethodology() {
           </section>
 
           <section className="card methodology-disclaimer">
-            <h2>⚠️ Important Disclaimer</h2>
+            <h2><span aria-hidden="true">⚠️ </span>Important Disclaimer</h2>
             <p>{config.disclaimer}</p>
           </section>
 

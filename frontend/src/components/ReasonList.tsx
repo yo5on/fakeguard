@@ -19,8 +19,8 @@ export default function ReasonList({ reasons }: ReasonListProps) {
     <div className="reason-list">
       <h3>Risk Indicators</h3>
       <div className="reasons">
-        {reasons.map((reason, index) => (
-          <div key={index} className="reason-item">
+        {reasons.map((reason) => (
+          <div key={reason.code} className="reason-item">
             <div className="reason-header">
               <span className="reason-code">{reason.code}</span>
               <span className="reason-weight">

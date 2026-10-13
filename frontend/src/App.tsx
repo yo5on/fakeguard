@@ -5,6 +5,7 @@ import Analyzer from './pages/Analyzer';
 import Accounts from './pages/Accounts';
 import AccountDetails from './pages/AccountDetails';
 import ScoringMethodology from './pages/ScoringMethodology';
+import NotFound from './pages/NotFound';
 import './styles/global.css';
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
             <Route path="/accounts" element={<Accounts />} />
             <Route path="/accounts/:id" element={<AccountDetails />} />
             <Route path="/scoring" element={<ScoringMethodology />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
       </div>

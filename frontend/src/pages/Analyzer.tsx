@@ -1,44 +1,37 @@
 import { useState } from 'react';
 import { api } from '../services/api';
-import { AccountFormData, AnalysisResponse } from '../types';
+import { AnalysisResponse } from '../types';
+import { AnalyzerFormValues, initialFormData, toAccountPayload } from '../utils/accountForm';
 import RiskGauge from '../components/RiskGauge';
 import RiskBadge from '../components/RiskBadge';
 import RiskBreakdown from '../components/RiskBreakdown';
 import ReasonList from '../components/ReasonList';
 import './Analyzer.css';
 
-const initialFormData: AccountFormData = {
-  username: '',
-  age_days: 0,
-  followers: 0,
-  following: 0,
-  posts_per_day: 0,
-  profile_completeness: 0,
-  avg_likes: 0,
-  avg_comments: 0,
-};
-
 export default function Analyzer() {
-  const [formData, setFormData] = useState<AccountFormData>(initialFormData);
+  const [formData, setFormData] = useState<AnalyzerFormValues>(initialFormData);
   const [result, setResult] = useState<AnalysisResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === 'username' ? value : parseFloat(value) || 0,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setLoading(true);
 
+    const payload = toAccountPayload(formData);
+    if (typeof payload === 'string') {
+      setError(payload);
+      return;
+    }
+
+    setLoading(true);
     try {
-      const response = await api.analyzeAccount(formData);
+      const response = await api.analyzeAccount(payload);
       setResult(response);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Analysis failed');
@@ -74,6 +67,8 @@ export default function Analyzer() {
                     id="username"
                     name="username"
                     value={formData.username}
+                    maxLength={255}
+                    autoComplete="off"
                     onChange={handleChange}
                     required
                     placeholder="e.g., john_doe"
@@ -86,7 +81,9 @@ export default function Analyzer() {
                     type="number"
                     id="age_days"
                     name="age_days"
-                    value={formData.age_days || ''}
+                    value={formData.age_days}
+                    inputMode="numeric"
+                    step="1"
                     onChange={handleChange}
                     required
                     min="0"
@@ -100,7 +97,9 @@ export default function Analyzer() {
                     type="number"
                     id="followers"
                     name="followers"
-                    value={formData.followers || ''}
+                    value={formData.followers}
+                    inputMode="numeric"
+                    step="1"
                     onChange={handleChange}
                     required
                     min="0"
@@ -114,7 +113,9 @@ export default function Analyzer() {
                     type="number"
                     id="following"
                     name="following"
-                    value={formData.following || ''}
+                    value={formData.following}
+                    inputMode="numeric"
+                    step="1"
                     onChange={handleChange}
                     required
                     min="0"
@@ -128,11 +129,11 @@ export default function Analyzer() {
                     type="number"
                     id="posts_per_day"
                     name="posts_per_day"
-                    value={formData.posts_per_day || ''}
+                    value={formData.posts_per_day}
                     onChange={handleChange}
                     required
                     min="0"
-                    step="0.1"
+                    step="any"
                     placeholder="e.g., 3.5"
                   />
                 </div>
@@ -143,12 +144,12 @@ export default function Analyzer() {
                     type="number"
                     id="profile_completeness"
                     name="profile_completeness"
-                    value={formData.profile_completeness || ''}
+                    value={formData.profile_completeness}
                     onChange={handleChange}
                     required
                     min="0"
                     max="100"
-                    step="0.1"
+                    step="any"
                     placeholder="e.g., 85"
                   />
                 </div>
@@ -159,11 +160,11 @@ export default function Analyzer() {
                     type="number"
                     id="avg_likes"
                     name="avg_likes"
-                    value={formData.avg_likes || ''}
+                    value={formData.avg_likes}
                     onChange={handleChange}
                     required
                     min="0"
-                    step="0.1"
+                    step="any"
                     placeholder="e.g., 50"
                   />
                 </div>
@@ -174,17 +175,21 @@ export default function Analyzer() {
                     type="number"
                     id="avg_comments"
                     name="avg_comments"
-                    value={formData.avg_comments || ''}
+                    value={formData.avg_comments}
                     onChange={handleChange}
                     required
                     min="0"
-                    step="0.1"
+                    step="any"
                     placeholder="e.g., 5"
                   />
                 </div>
               </div>
 
-              {error && <div className="error-message">{error}</div>}
+              {error && (
+                <div className="error-message" role="alert">
+                  {error}
+                </div>
+              )}
 
               <div className="form-actions">
                 <button type="submit" className="btn btn-primary" disabled={loading}>
@@ -198,7 +203,7 @@ export default function Analyzer() {
           </div>
 
           {result && (
-            <div className="analyzer-results">
+            <div className="analyzer-results" aria-live="polite">
               <div className="card">
                 <h2>Analysis Results</h2>
                 

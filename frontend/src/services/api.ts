@@ -1,62 +1,101 @@
 import {
   Account,
-  AnalysisResponse,
   AccountFormData,
+  AccountQueryParams,
+  AnalysisHistoryResponse,
+  AnalysisResponse,
   DashboardSummary,
-  RiskDistribution,
-  TopRiskAccount,
-  PaginatedResponse,
+  HealthResponse,
   ImportResult,
+  PaginatedResponse,
+  RiskDistribution,
+  ScoringConfig,
+  TopRiskAccount,
 } from '../types';
 
-const API_BASE = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api';
+/**
+ * Build the API base URL. VITE_API_URL is the backend origin (without /api);
+ * trailing slashes are tolerated. Without it, requests go to the same origin
+ * (proxied to the backend by Vite in development).
+ */
+export function resolveApiBase(apiUrl: string | undefined): string {
+  const origin = (apiUrl ?? '').trim().replace(/\/+$/, '');
+  if (!origin) return '/api';
+  return origin.endsWith('/api') ? origin : `${origin}/api`;
+}
 
-async function handleResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Request failed' }));
-    throw new Error(error.detail || `HTTP ${response.status}`);
+const API_BASE = resolveApiBase(import.meta.env.VITE_API_URL);
+
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
   }
-  return response.json();
+}
+
+const LOCATION_PREFIXES = new Set(['body', 'query', 'path']);
+
+interface ValidationIssue {
+  loc?: (string | number)[];
+  msg?: string;
+}
+
+/** Turn a FastAPI error body (string or validation-issue list) into readable text. */
+export function formatErrorDetail(detail: unknown, status: number): string {
+  if (typeof detail === 'string' && detail.trim()) return detail;
+  if (Array.isArray(detail) && detail.length > 0) {
+    return detail
+      .map((issue: ValidationIssue) => {
+        const field = (issue.loc ?? []).filter((part) => !LOCATION_PREFIXES.has(String(part))).join('.');
+        return field ? `${field}: ${issue.msg ?? 'invalid value'}` : issue.msg ?? 'Invalid value';
+      })
+      .join('; ');
+  }
+  return `Request failed (HTTP ${status})`;
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, init);
+  } catch (err) {
+    if (init?.signal?.aborted) throw err;
+    throw new ApiError('Unable to reach the FakeGuard API. Check that the backend is running.', 0);
+  }
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new ApiError(formatErrorDetail(body?.detail, response.status), response.status);
+  }
+  return response.json() as Promise<T>;
+}
+
+function postJson<T>(path: string, data: unknown): Promise<T> {
+  return request<T>(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
 }
 
 export const api = {
   // Health check
-  health: async () => {
-    const response = await fetch(`${API_BASE}/health`);
-    return handleResponse(response);
-  },
+  health: () => request<HealthResponse>('/health'),
 
   // Analysis
-  analyzeAccount: async (data: AccountFormData): Promise<AnalysisResponse> => {
-    const response = await fetch(`${API_BASE}/analyze`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    return handleResponse(response);
-  },
+  analyzeAccount: (data: AccountFormData) => postJson<AnalysisResponse>('/analyze', data),
 
-  analyzeExistingAccount: async (accountId: number): Promise<AnalysisResponse> => {
-    const response = await fetch(`${API_BASE}/accounts/${accountId}/analyze`, {
-      method: 'POST',
-    });
-    return handleResponse(response);
-  },
+  analyzeExistingAccount: (accountId: number) =>
+    request<AnalysisResponse>(`/accounts/${accountId}/analyze`, { method: 'POST' }),
 
-  getAccountAnalyses: async (accountId: number) => {
-    const response = await fetch(`${API_BASE}/accounts/${accountId}/analysis`);
-    return handleResponse(response);
-  },
+  getAccountAnalyses: (accountId: number) =>
+    request<AnalysisHistoryResponse>(`/accounts/${accountId}/analysis`),
 
   // Accounts
-  getAccounts: async (params: {
-    skip?: number;
-    limit?: number;
-    search?: string;
-    category?: string;
-    sort_by?: string;
-    sort_order?: string;
-  }): Promise<PaginatedResponse<Account>> => {
+  getAccounts: (params: AccountQueryParams, init?: RequestInit) => {
     const searchParams = new URLSearchParams();
     if (params.skip !== undefined) searchParams.append('skip', params.skip.toString());
     if (params.limit !== undefined) searchParams.append('limit', params.limit.toString());
@@ -64,56 +103,29 @@ export const api = {
     if (params.category) searchParams.append('category', params.category);
     if (params.sort_by) searchParams.append('sort_by', params.sort_by);
     if (params.sort_order) searchParams.append('sort_order', params.sort_order);
-
-    const response = await fetch(`${API_BASE}/accounts?${searchParams}`);
-    return handleResponse(response);
+    return request<PaginatedResponse<Account>>(`/accounts?${searchParams}`, init);
   },
 
-  getAccount: async (accountId: number): Promise<Account> => {
-    const response = await fetch(`${API_BASE}/accounts/${accountId}`);
-    return handleResponse(response);
-  },
+  getAccount: (accountId: number) => request<Account>(`/accounts/${accountId}`),
 
-  createAccount: async (data: AccountFormData): Promise<Account> => {
-    const response = await fetch(`${API_BASE}/accounts`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    return handleResponse(response);
-  },
+  createAccount: (data: AccountFormData) => postJson<Account>('/accounts', data),
 
   // Dashboard
-  getDashboardSummary: async (): Promise<DashboardSummary> => {
-    const response = await fetch(`${API_BASE}/dashboard/summary`);
-    return handleResponse(response);
-  },
+  getDashboardSummary: () => request<DashboardSummary>('/dashboard/summary'),
 
-  getRiskDistribution: async (): Promise<{ distribution: RiskDistribution[] }> => {
-    const response = await fetch(`${API_BASE}/dashboard/distribution`);
-    return handleResponse(response);
-  },
+  getRiskDistribution: () =>
+    request<{ distribution: RiskDistribution[] }>('/dashboard/distribution'),
 
-  getTopRiskAccounts: async (limit = 10): Promise<{ accounts: TopRiskAccount[] }> => {
-    const response = await fetch(`${API_BASE}/dashboard/top-risk?limit=${limit}`);
-    return handleResponse(response);
-  },
+  getTopRiskAccounts: (limit = 10) =>
+    request<{ accounts: TopRiskAccount[] }>(`/dashboard/top-risk?limit=${limit}`),
 
   // Import
-  importCSV: async (file: File): Promise<ImportResult> => {
+  importCSV: (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-
-    const response = await fetch(`${API_BASE}/import/csv`, {
-      method: 'POST',
-      body: formData,
-    });
-    return handleResponse(response);
+    return request<ImportResult>('/import/csv', { method: 'POST', body: formData });
   },
 
   // Configuration
-  getScoringConfig: async () => {
-    const response = await fetch(`${API_BASE}/config/scoring`);
-    return handleResponse(response);
-  },
+  getScoringConfig: () => request<ScoringConfig>('/config/scoring'),
 };

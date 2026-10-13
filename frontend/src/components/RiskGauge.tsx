@@ -6,8 +6,9 @@ interface RiskGaugeProps {
 }
 
 export default function RiskGauge({ score, category }: RiskGaugeProps) {
-  const displayScore = Math.round(score);
-  const rotation = (score / 100) * 180;
+  const clamped = Math.min(100, Math.max(0, Number.isFinite(score) ? score : 0));
+  const displayScore = Math.round(clamped);
+  const rotation = (clamped / 100) * 180;
   
   const getCategoryColor = () => {
     switch (category) {
@@ -20,9 +21,9 @@ export default function RiskGauge({ score, category }: RiskGaugeProps) {
   };
 
   return (
-    <div className="risk-gauge">
+    <div className="risk-gauge" role="img" aria-label={`Risk score ${displayScore} out of 100, ${category}`}>
       <div className="gauge-container">
-        <svg viewBox="0 0 200 120" className="gauge-svg">
+        <svg viewBox="0 0 200 120" className="gauge-svg" aria-hidden="true">
           {/* Background arc */}
           <path
             d="M 20 100 A 80 80 0 0 1 180 100"
@@ -39,7 +40,7 @@ export default function RiskGauge({ score, category }: RiskGaugeProps) {
             stroke={getCategoryColor()}
             strokeWidth="20"
             strokeLinecap="round"
-            strokeDasharray={`${(score / 100) * 251} 251`}
+            strokeDasharray={`${(clamped / 100) * 251} 251`}
           />
           
           {/* Needle */}

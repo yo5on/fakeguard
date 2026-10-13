@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { api } from '../services/api';
@@ -23,7 +23,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadDashboard = async () => {
+  const loadDashboard = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -42,15 +42,18 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadDashboard();
-  }, []);
+  }, [loadDashboard]);
 
   if (loading) return <LoadingState />;
   if (error) return <ErrorState message={error} onRetry={loadDashboard} />;
   if (!summary) return null;
+
+  const analyzedCount = distribution.reduce((sum, entry) => sum + entry.count, 0);
+  const chartData = distribution.filter((entry) => entry.count > 0);
 
   return (
     <div className="dashboard">
@@ -102,25 +105,41 @@ export default function Dashboard() {
         <div className="dashboard-content">
           <div className="chart-card card">
             <h2>Risk Distribution</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={distribution}
-                  dataKey="count"
-                  nameKey="category"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  label={({ category, count }) => `${category}: ${count}`}
-                >
-                  {distribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[entry.category as keyof typeof COLORS]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+            {analyzedCount === 0 ? (
+              <p className="no-data">
+                No analyses yet. Import accounts from the Accounts page to see the distribution.
+              </p>
+            ) : (
+              <div
+                role="img"
+                aria-label={`Risk distribution: ${distribution
+                  .map((entry) => `${entry.category} ${entry.count}`)
+                  .join(', ')}`}
+              >
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={chartData}
+                      dataKey="count"
+                      nameKey="category"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      label={({ category, count }) => `${category}: ${count}`}
+                    >
+                      {chartData.map((entry) => (
+                        <Cell
+                          key={entry.category}
+                          fill={COLORS[entry.category as keyof typeof COLORS]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
 
           <div className="top-accounts-card card">
@@ -147,7 +166,11 @@ export default function Dashboard() {
                           <RiskBadge category={account.category} size="sm" />
                         </td>
                         <td>
-                          <Link to={`/accounts/${account.id}`} className="btn-link">
+                          <Link
+                            to={`/accounts/${account.id}`}
+                            className="btn-link"
+                            aria-label={`View details for ${account.username}`}
+                          >
                             View Details
                           </Link>
                         </td>
