@@ -117,9 +117,12 @@ export interface AnalysisHistoryResponse {
 }
 
 export interface ScoringFeatureConfig {
+  label?: string;
   weight: number;
   thresholds?: Record<string, number>;
   formula?: string;
+  definition?: string;
+  unavailable_when?: string;
 }
 
 export interface ScoringCategoryConfig {
@@ -131,7 +134,25 @@ export interface ScoringConfig {
   features: Record<string, ScoringFeatureConfig>;
   categories: Record<string, ScoringCategoryConfig>;
   reason_codes: Record<string, string>;
+  reason_code_triggers?: Record<string, string>;
+  missing_data?: string;
   disclaimer: string;
+}
+
+export interface AuthStatus {
+  auth_required: boolean;
+  auth_configured: boolean;
+}
+
+export interface TokenResponse {
+  access_token: string;
+  token_type: string;
+  expires_at: number;
+  username: string;
+}
+
+export interface AuthUser {
+  username: string;
 }
 
 export interface HealthResponse {

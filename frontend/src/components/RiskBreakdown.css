@@ -78,3 +78,11 @@
   color: var(--color-text-secondary);
   font-style: italic;
 }
+.breakdown-note {
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-background);
+  border-radius: var(--radius);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}

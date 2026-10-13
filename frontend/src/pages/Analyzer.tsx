@@ -229,7 +229,10 @@ export default function Analyzer() {
                   </div>
                 </div>
 
-                <RiskBreakdown features={result.analysis.features} />
+                <RiskBreakdown
+                  features={result.analysis.features}
+                  totalWeightUsed={result.analysis.total_weight_used}
+                />
                 <ReasonList reasons={result.analysis.reason_codes} />
 
                 <div className="disclaimer">

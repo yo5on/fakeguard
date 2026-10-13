@@ -144,6 +144,24 @@
   color: var(--color-text);
 }
 
+.trigger {
+  display: block;
+  margin-top: var(--spacing-xs);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.formula-line {
+  margin: var(--spacing-md) 0;
+  overflow-x: auto;
+}
+
+.formula-line code {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-background);
+  border-radius: var(--radius);
+}
+
 .example {
   padding: var(--spacing-md);
   background: #dbeafe;

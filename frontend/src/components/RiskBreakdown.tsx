@@ -3,12 +3,25 @@ import './RiskBreakdown.css';
 
 interface RiskBreakdownProps {
   features: FeatureAnalysis[];
+  /** Sum of the weights of available features (1 when nothing is missing). */
+  totalWeightUsed?: number;
 }
 
-export default function RiskBreakdown({ features }: RiskBreakdownProps) {
+export default function RiskBreakdown({ features, totalWeightUsed }: RiskBreakdownProps) {
+  const partial = totalWeightUsed !== undefined && totalWeightUsed > 0 && totalWeightUsed < 0.9999;
+  const weightedSum = features.reduce((sum, f) => sum + (f.available ? f.weighted_contribution : 0), 0);
+
   return (
     <div className="risk-breakdown">
       <h3>Feature Risk Breakdown</h3>
+      {partial && (
+        <p className="breakdown-note">
+          Some features could not be calculated, so only {Math.round(totalWeightUsed * 100)}% of the
+          weight is available. The score is the weighted sum divided by that share:{' '}
+          {weightedSum.toFixed(2)} ÷ {totalWeightUsed.toFixed(2)} ={' '}
+          {(weightedSum / totalWeightUsed).toFixed(1)}.
+        </p>
+      )}
       <div className="breakdown-list">
         {features.map((feature) => (
           <div key={feature.feature} className="breakdown-item">

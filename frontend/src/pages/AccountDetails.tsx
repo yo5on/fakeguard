@@ -171,7 +171,7 @@ export default function AccountDetails() {
                   </div>
                 </div>
 
-                <RiskBreakdown features={details.features} />
+                <RiskBreakdown features={details.features} totalWeightUsed={details.total_weight_used} />
                 <ReasonList reasons={details.reason_codes} />
               </div>
             </div>

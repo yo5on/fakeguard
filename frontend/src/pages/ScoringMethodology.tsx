@@ -42,13 +42,17 @@ export default function ScoringMethodology() {
 
         <div className="methodology-content">
           <section className="card">
-            <h2>Feature Weights</h2>
-            <p>Each feature contributes to the final risk score based on its assigned weight:</p>
+            <h2>Feature Weights and Thresholds</h2>
+            <p>
+              Each feature is converted to a risk value from 0 to 100 using the bands below, then
+              weighted. These values are served by the API from the same tables the scoring engine
+              uses.
+            </p>
             <div className="weights-grid">
               {Object.entries(config.features).map(([key, feature]) => (
                 <div key={key} className="weight-item">
                   <div className="weight-header">
-                    <span className="feature-name">{formatFeatureName(key)}</span>
+                    <span className="feature-name">{feature.label ?? formatFeatureName(key)}</span>
                     <span className="weight-value">{(feature.weight * 100).toFixed(0)}%</span>
                   </div>
                   {feature.thresholds && (
@@ -61,9 +65,19 @@ export default function ScoringMethodology() {
                       ))}
                     </div>
                   )}
+                  {feature.definition && (
+                    <div className="formula">
+                      <strong>Measured as:</strong> {feature.definition}
+                    </div>
+                  )}
                   {feature.formula && (
                     <div className="formula">
                       <strong>Formula:</strong> {feature.formula}
+                    </div>
+                  )}
+                  {feature.unavailable_when && (
+                    <div className="formula">
+                      <strong>Unavailable when:</strong> {feature.unavailable_when}
                     </div>
                   )}
                 </div>
@@ -87,28 +101,45 @@ export default function ScoringMethodology() {
 
           <section className="card">
             <h2>Reason Codes</h2>
-            <p>When risk indicators are detected, the system generates reason codes:</p>
+            <p>
+              A reason code is listed when its feature is available and its risk reaches the
+              trigger level:
+            </p>
             <div className="reason-codes">
               {Object.entries(config.reason_codes).map(([code, description]) => (
                 <div key={code} className="reason-code-item">
                   <span className="code">{code}</span>
-                  <span className="description">{description}</span>
+                  <span className="description">
+                    {description}
+                    {config.reason_code_triggers?.[code] && (
+                      <span className="trigger">Trigger: {config.reason_code_triggers[code]}</span>
+                    )}
+                  </span>
                 </div>
               ))}
             </div>
           </section>
 
           <section className="card">
-            <h2>Missing Data Handling</h2>
+            <h2>How the Final Score Is Calculated</h2>
+            <p className="formula-line">
+              <code>score = Σ (feature risk × weight) ÷ Σ (weights of available features)</code>
+            </p>
             <p>
-              When certain metrics cannot be calculated (e.g., engagement rate when followers = 0), 
-              the feature is marked as unavailable. The remaining features are renormalized to maintain 
-              a valid 0-100 score range without artificially inflating the risk.
+              When every feature is available the weights sum to 1, so the score is simply the
+              weighted sum. The follower/following ratio cannot be calculated when following = 0,
+              and engagement cannot be calculated when followers = 0. Unavailable features are
+              left out of both sums, so the score is the weighted average of the features that
+              could be measured. A missing feature is counted neither as zero risk nor as
+              maximum risk, and the remaining feature risks are not changed.
             </p>
             <div className="example">
-              <strong>Example:</strong> If both follower/following ratio and engagement are unavailable 
-              (45% combined weight), the remaining three features (55% weight) are scaled to represent 
-              100% of the score.
+              <strong>Example:</strong> an account aged 10 days with 0 followers, 0 following,
+              3.55 posts/day and a 50% complete profile. Ratio and engagement (25% + 20% = 45% of
+              the weight) are unavailable. The available features contribute
+              70 × 0.20 + 0 × 0.20 + 50 × 0.15 = 21.5 over a combined weight of 0.55, so the
+              score is 21.5 ÷ 0.55 ≈ 39 (MEDIUM). The feature breakdown shows the contributions
+              before this division (14.0, 0.0 and 7.5), so they add up to 21.5 rather than 39.
             </div>
           </section>
 

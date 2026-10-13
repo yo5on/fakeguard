@@ -1,4 +1,5 @@
 import { Link, NavLink } from 'react-router-dom';
+import { useAuth } from '../auth/authContext';
 import './Header.css';
 
 const NAV_ITEMS = [
@@ -9,6 +10,9 @@ const NAV_ITEMS = [
 ];
 
 export default function Header() {
+  const auth = useAuth();
+  const signedIn = auth.authRequired && auth.username;
+
   return (
     <header className="header">
       <div className="container">
@@ -29,6 +33,16 @@ export default function Header() {
                 {label}
               </NavLink>
             ))}
+            {signedIn && (
+              <div className="session">
+                <span className="session-user" title="Signed in user">
+                  {auth.username}
+                </span>
+                <button type="button" className="btn btn-secondary btn-small" onClick={auth.logout}>
+                  Sign out
+                </button>
+              </div>
+            )}
           </nav>
         </div>
       </div>

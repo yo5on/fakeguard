@@ -33,7 +33,27 @@
 
 .nav {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: var(--spacing-lg);
+}
+
+.session {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding-left: var(--spacing-md);
+  border-left: 1px solid var(--color-border);
+}
+
+.session-user {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.btn-small {
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: 0.875rem;
 }
 
 .nav-link {
@@ -70,5 +90,10 @@
   .nav-link {
     font-size: 0.875rem;
     padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .session {
+    border-left: none;
+    padding-left: 0;
   }
 }

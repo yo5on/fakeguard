@@ -4,12 +4,15 @@ import {
   AccountQueryParams,
   AnalysisHistoryResponse,
   AnalysisResponse,
+  AuthStatus,
+  AuthUser,
   DashboardSummary,
   HealthResponse,
   ImportResult,
   PaginatedResponse,
   RiskDistribution,
   ScoringConfig,
+  TokenResponse,
   TopRiskAccount,
 } from '../types';
 
@@ -57,10 +60,29 @@ export function formatErrorDetail(detail: unknown, status: number): string {
   return `Request failed (HTTP ${status})`;
 }
 
+// Bearer token for the current session, managed by AuthProvider.
+let authToken: string | null = null;
+let unauthorizedHandler: (() => void) | null = null;
+
+export function setAuthToken(token: string | null): void {
+  authToken = token;
+}
+
+/** Called when the server rejects the current token (expired or revoked). */
+export function setUnauthorizedHandler(handler: (() => void) | null): void {
+  unauthorizedHandler = handler;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers);
+  const sentToken = authToken;
+  if (sentToken && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${sentToken}`);
+  }
+
   let response: Response;
   try {
-    response = await fetch(`${API_BASE}${path}`, init);
+    response = await fetch(`${API_BASE}${path}`, { ...init, headers });
   } catch (err) {
     if (init?.signal?.aborted) throw err;
     throw new ApiError('Unable to reach the FakeGuard API. Check that the backend is running.', 0);
@@ -68,7 +90,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    throw new ApiError(formatErrorDetail(body?.detail, response.status), response.status);
+    if (response.status === 401 && sentToken && sentToken === authToken) {
+      unauthorizedHandler?.();
+    }
+    let message = formatErrorDetail(body?.detail, response.status);
+    if (response.status === 429) {
+      const retryAfter = response.headers.get('Retry-After');
+      if (retryAfter) message = `${message} (retry in ${retryAfter}s)`;
+    }
+    throw new ApiError(message, response.status);
   }
   return response.json() as Promise<T>;
 }
@@ -84,6 +114,14 @@ function postJson<T>(path: string, data: unknown): Promise<T> {
 export const api = {
   // Health check
   health: () => request<HealthResponse>('/health'),
+
+  // Authentication
+  authStatus: () => request<AuthStatus>('/auth/status'),
+
+  login: (username: string, password: string) =>
+    postJson<TokenResponse>('/auth/login', { username, password }),
+
+  me: () => request<AuthUser>('/auth/me'),
 
   // Analysis
   analyzeAccount: (data: AccountFormData) => postJson<AnalysisResponse>('/analyze', data),
