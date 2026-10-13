@@ -567,8 +567,8 @@ Per requirements, the following were explicitly excluded:
 ### Functional Completeness: 100%
 All required features implemented and working.
 
-### Test Coverage: 100%
-All 24 tests passing, edge cases covered.
+### Tests
+The original 24 tests passed at the time of this report. Line coverage was not measured, so no coverage percentage is claimed. See the README for the current test suites.
 
 ### Documentation: 100%
 Complete documentation with guides and explanations.

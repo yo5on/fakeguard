@@ -24,7 +24,7 @@
 - [x] `README.md` - Backend documentation
 
 ### Tests
-- [x] 24 backend tests passing
+- [x] 24 backend tests passing (original suite; regression tests were added later, see README)
 - [x] Feature rule tests (6 tests)
 - [x] Risk engine tests (9 tests)
 - [x] API tests (9 tests)

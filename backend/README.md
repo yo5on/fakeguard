@@ -10,17 +10,17 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-2. Install dependencies:
+2. Install dependencies (`requirements.txt` holds runtime packages only; the dev file adds pytest and the data-generation tools):
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
-3. Create .env file:
+3. Optionally create a .env file (see `.env.example` for `DATABASE_URL`, `CORS_ORIGINS`, `MAX_UPLOAD_BYTES`):
 ```bash
 cp .env.example .env
 ```
 
-4. Generate synthetic data:
+4. (Optional) Regenerate the synthetic dataset in `data/synthetic_accounts.csv`:
 ```bash
 python scripts/generate_synthetic_data.py
 ```
@@ -37,10 +37,8 @@ Run tests:
 pytest
 ```
 
-Run with coverage:
-```bash
-pytest --cov=app tests/
-```
+Tests use an in-memory SQLite database and never touch `fakeguard.db`.
+`tests/test_regressions.py` covers bugs fixed during the code audit.
 
 ## API Documentation
 
@@ -56,17 +54,17 @@ Once the server is running, visit:
 - `GET /api/accounts/{id}/analysis` - Get analysis history
 
 ### Accounts
-- `GET /api/accounts` - List accounts (with pagination, search, filtering)
+- `GET /api/accounts` - List accounts (`skip`, `limit` 1-100, `search`, `category`, `sort_by`, `sort_order`)
 - `GET /api/accounts/{id}` - Get specific account
 - `POST /api/accounts` - Create account
 
 ### Dashboard
 - `GET /api/dashboard/summary` - Get dashboard statistics
 - `GET /api/dashboard/distribution` - Get risk distribution
-- `GET /api/dashboard/top-risk` - Get high-risk accounts
+- `GET /api/dashboard/top-risk` - Get high-risk accounts (`limit` 1-100)
 
 ### Import
-- `POST /api/import/csv` - Import accounts from CSV
+- `POST /api/import/csv` - Import accounts from a UTF-8 CSV (max 5 MB by default); each imported account gets an initial analysis
 
 ### Configuration
 - `GET /api/config/scoring` - Get scoring methodology

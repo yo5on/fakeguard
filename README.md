@@ -33,41 +33,53 @@
 <samp><b>Frontend</b></samp>
 
 - <samp>React 18 + TypeScript</samp>
-- <samp>Vite</samp>
-- <samp>React Router</samp>
+- <samp>Vite 6</samp>
+- <samp>React Router 7</samp>
 - <samp>Recharts</samp>
-- <samp>CSS Modules</samp>
+- <samp>Plain CSS (one stylesheet per component/page)</samp>
+- <samp>Vitest + Testing Library, ESLint 9</samp>
 
 <samp><b>Backend</b></samp>
 
 - <samp>Python 3.11+</samp>
-- <samp>FastAPI</samp>
-- <samp>SQLAlchemy</samp>
-- <samp>Pandas</samp>
+- <samp>FastAPI + Pydantic v2</samp>
+- <samp>SQLAlchemy 2.0</samp>
 - <samp>SQLite</samp>
+- <samp>pytest</samp>
 
 <samp><b>Project Structure</b></samp>
 
 ```text
 fakeguard/
-├── frontend/          # React frontend
+├── frontend/                  # React frontend
 │   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── services/
+│   │   ├── components/        # Gauge, badges, breakdown, shared states
+│   │   ├── hooks/             # useDebouncedValue
+│   │   ├── pages/             # Dashboard, Analyzer, Accounts, AccountDetails, Methodology
+│   │   ├── services/api.ts    # Typed API client + error formatting
 │   │   ├── types/
-│   │   └── styles/
+│   │   ├── utils/             # Analyzer form parsing/validation
+│   │   ├── styles/
+│   │   └── test/              # Vitest + Testing Library tests
+│   ├── eslint.config.js
+│   ├── vite.config.ts
+│   ├── .env.example
 │   └── package.json
-├── backend/           # FastAPI backend
+├── backend/                   # FastAPI backend
 │   ├── app/
-│   │   ├── routes/
-│   │   ├── scoring/
+│   │   ├── routes/            # accounts, analysis, dashboard, import_data
+│   │   ├── scoring/           # feature rules, reason codes, risk engine
+│   │   ├── database.py
 │   │   ├── models.py
+│   │   ├── queries.py         # shared "latest analysis" queries
+│   │   ├── schemas.py
 │   │   └── main.py
-│   ├── scripts/
-│   ├── data/
+│   ├── scripts/               # synthetic data generator
+│   ├── data/                  # synthetic_accounts.csv (1,006 rows)
 │   ├── tests/
-│   └── requirements.txt
+│   ├── .env.example
+│   ├── requirements.txt       # runtime dependencies
+│   └── requirements-dev.txt   # + test / data-generation tools
 └── docs/
 ```
 
@@ -102,8 +114,8 @@ fakeguard/
 
 <samp><b>Prerequisites</b></samp>
 
-- <samp>Python 3.11+</samp>
-- <samp>Node.js 18+</samp>
+- <samp>Python 3.11+ (tested on 3.13)</samp>
+- <samp>Node.js 20+ (tested on 24)</samp>
 - <samp>Git</samp>
 
 <samp><b>Backend Setup</b></samp>
@@ -121,16 +133,16 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\\Scripts\\activate
 ```
 
-3. <samp>Install dependencies:</samp>
+3. <samp>Install dependencies (use <code>requirements.txt</code> alone for production):</samp>
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
-4. <samp>Generate synthetic data:</samp>
+4. <samp>Optionally create a <code>.env</code> file (defaults work for local development):</samp>
 
 ```bash
-python scripts/generate_synthetic_data.py
+cp .env.example .env
 ```
 
 5. <samp>Run the server:</samp>
@@ -143,6 +155,8 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 <samp>API documentation: http://localhost:8000/docs</samp>
 
+<samp>The SQLite database is created automatically on startup. To load demo data, open the Accounts page and import <code>backend/data/synthetic_accounts.csv</code>; each imported account is scored immediately. The CSV can be regenerated with <code>python scripts/generate_synthetic_data.py</code>.</samp>
+
 <samp><b>Frontend Setup</b></samp>
 
 ```bash
@@ -153,18 +167,28 @@ npm run dev
 
 <samp>Frontend: http://localhost:5173</samp>
 
-<samp><b>Running Tests</b></samp>
+<samp><b>Environment Variables</b></samp>
+
+| Variable | Where | Default | Description |
+|---|---|---|---|
+| <samp>DATABASE_URL</samp> | <samp>backend</samp> | <samp>sqlite:///./fakeguard.db</samp> | <samp>SQLAlchemy database URL</samp> |
+| <samp>CORS_ORIGINS</samp> | <samp>backend</samp> | <samp>http://localhost:5173</samp> | <samp>Comma-separated allowed origins</samp> |
+| <samp>MAX_UPLOAD_BYTES</samp> | <samp>backend</samp> | <samp>5242880</samp> | <samp>Maximum CSV upload size</samp> |
+| <samp>VITE_API_URL</samp> | <samp>frontend (build time)</samp> | <samp>unset</samp> | <samp>Backend origin, without <code>/api</code>. Leave unset in development (Vite proxies <code>/api</code>)</samp> |
+
+<samp><b>Running Tests and Checks</b></samp>
 
 ```bash
 cd backend
 pytest
 ```
 
-<samp><b>Frontend Build</b></samp>
-
 ```bash
 cd frontend
-npm run build
+npm test            # Vitest unit/component tests
+npm run typecheck   # TypeScript
+npm run lint        # ESLint
+npm run build       # type-check + production build
 ```
 
 ---
@@ -180,8 +204,8 @@ npm run build
 
 <samp><b>Analyzer</b></samp>
 
-- <samp>Real-time account analysis</samp>
-- <samp>Interactive form with validation</samp>
+- <samp>Instant account analysis (not saved to the database)</samp>
+- <samp>Form validation, including zero values for edge cases</samp>
 - <samp>Risk gauge visualization</samp>
 - <samp>Feature-by-feature breakdown</samp>
 - <samp>Reason codes with explanations</samp>
@@ -189,18 +213,18 @@ npm run build
 <samp><b>Accounts</b></samp>
 
 - <samp>Paginated account list</samp>
-- <samp>Search by username</samp>
-- <samp>Filter by risk category</samp>
-- <samp>Sortable columns</samp>
-- <samp>CSV bulk import</samp>
+- <samp>Debounced search by username</samp>
+- <samp>Filter by risk category (latest analysis)</samp>
+- <samp>Sortable columns, including risk score</samp>
+- <samp>CSV bulk import with per-row error reporting; imported accounts are scored automatically</samp>
 - <samp>View individual account details</samp>
 
 <samp><b>Account Details</b></samp>
 
 - <samp>Complete account information</samp>
 - <samp>Latest analysis results</samp>
-- <samp>Re-analyze functionality</samp>
-- <samp>Historical analysis tracking</samp>
+- <samp>Analyze / re-analyze functionality</samp>
+- <samp>Analysis history table</samp>
 
 <samp><b>Scoring Methodology</b></samp>
 
@@ -214,7 +238,7 @@ npm run build
 
 <div align="center"><samp><b>Synthetic Dataset</b></samp></div>
 
-<samp>The system includes 1,000+ synthetic accounts covering:</samp>
+<samp>The system includes 1,006 synthetic accounts (<code>backend/data/synthetic_accounts.csv</code>) covering:</samp>
 
 - <samp><b>Normal accounts (400):</b> Typical legitimate users</samp>
 - <samp><b>New legitimate accounts (150):</b> Recently created but authentic</samp>
@@ -231,25 +255,25 @@ npm run build
 
 <samp><b>Analysis</b></samp>
 
-- <samp><code>POST /api/analyze</code> — Analyze new account</samp>
-- <samp><code>POST /api/accounts/{id}/analyze</code> — Analyze existing account</samp>
-- <samp><code>GET /api/accounts/{id}/analysis</code> — Get analysis history</samp>
+- <samp><code>POST /api/analyze</code> — Analyze account data without saving it</samp>
+- <samp><code>POST /api/accounts/{id}/analyze</code> — Analyze an existing account and store the result</samp>
+- <samp><code>GET /api/accounts/{id}/analysis</code> — Analysis history, newest first</samp>
 
 <samp><b>Accounts</b></samp>
 
-- <samp><code>GET /api/accounts</code> — List accounts (pagination, search, filter, sort)</samp>
-- <samp><code>GET /api/accounts/{id}</code> — Get specific account</samp>
-- <samp><code>POST /api/accounts</code> — Create account</samp>
+- <samp><code>GET /api/accounts</code> — List accounts. Query: <code>skip</code>, <code>limit</code> (1–100), <code>search</code>, <code>category</code> (LOW/MEDIUM/HIGH/CRITICAL), <code>sort_by</code> (id, username, risk_score, age_days, followers, following), <code>sort_order</code> (asc/desc)</samp>
+- <samp><code>GET /api/accounts/{id}</code> — Account with its latest analysis</samp>
+- <samp><code>POST /api/accounts</code> — Create account (400 if the username exists)</samp>
 
 <samp><b>Dashboard</b></samp>
 
 - <samp><code>GET /api/dashboard/summary</code> — Dashboard statistics</samp>
 - <samp><code>GET /api/dashboard/distribution</code> — Risk distribution</samp>
-- <samp><code>GET /api/dashboard/top-risk</code> — High-risk accounts</samp>
+- <samp><code>GET /api/dashboard/top-risk?limit=10</code> — Highest-risk accounts (limit 1–100)</samp>
 
 <samp><b>Import</b></samp>
 
-- <samp><code>POST /api/import/csv</code> — Import accounts from CSV</samp>
+- <samp><code>POST /api/import/csv</code> — Multipart upload (field <code>file</code>). UTF-8 CSV with columns <code>username, age_days, followers, following, posts_per_day, profile_completeness, avg_likes, avg_comments</code> and optional <code>archetype</code>. Existing or duplicate usernames are skipped, invalid rows are reported, and each imported account gets an initial analysis. Max 5 MB by default</samp>
 
 <samp><b>Configuration</b></samp>
 
@@ -316,12 +340,12 @@ npm run build
 
 <div align="center"><samp><b>Security Considerations</b></samp></div>
 
-- <samp>Input validation on all endpoints</samp>
-- <samp>No sensitive data exposure</samp>
-- <samp>Proper error handling</samp>
-- <samp>SQL injection prevention</samp>
-- <samp>CORS configuration</samp>
-- <samp>Rate limiting (recommended for production)</samp>
+- <samp>Pydantic validation on all inputs (non-negative, finite, bounded numbers; trimmed non-blank usernames)</samp>
+- <samp>ORM-parameterized queries; search wildcards are escaped</samp>
+- <samp>CSV uploads are size-limited and parsed with the standard library</samp>
+- <samp>CORS restricted to configured origins, without credentials</samp>
+- <samp>Internal database errors are not echoed to clients</samp>
+- <samp><b>No authentication:</b> anyone who can reach the API can read and import data. Run it locally or behind an access-controlled proxy, and add authentication and rate limiting before any real deployment</samp>
 
 ---
 

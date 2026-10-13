@@ -15,7 +15,7 @@ Get the system running in 5 minutes.
 cd backend
 
 # Install dependencies
-pip install fastapi uvicorn sqlalchemy pydantic pydantic-settings pandas python-multipart pytest pytest-asyncio httpx python-dotenv
+pip install -r requirements-dev.txt
 
 # Start server
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
@@ -46,7 +46,7 @@ npm run dev
 3. Click \"Choose CSV File\"
 4. Select `backend/data/synthetic_accounts.csv`
 5. Click \"Import\"
-6. Wait for \"Imported: 1006\" message
+6. Wait for \"Imported: 1006\" message (each imported account is scored automatically)
 
 ✅ Data loaded!
 

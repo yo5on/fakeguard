@@ -59,7 +59,9 @@ Scroll down to **Environment Variables** section and add:
 | `CORS_ORIGINS` | `*` |
 | `DATABASE_URL` | `sqlite:///./fakeguard.db` |
 
-**Note:** We'll update `CORS_ORIGINS` after deploying the frontend.
+**Note:** We'll update `CORS_ORIGINS` after deploying the frontend. `*` allows any website to call the API (credentials are never allowed), so replace it with your exact frontend URL as soon as you have it.
+
+**Note:** Render's free tier uses an ephemeral filesystem, so the SQLite database is reset on every redeploy or restart. Re-import the CSV after a restart, or point `DATABASE_URL` at a persistent database.
 
 ### 1.5 Deploy
 

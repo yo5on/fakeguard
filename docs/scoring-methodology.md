@@ -225,11 +225,11 @@ The system generates human-readable reason codes when specific risk indicators a
 
 | Code | Description | Trigger |
 |------|-------------|---------|
-| R01 | Very new account | Age < 30 days (risk ≥ 45) |
-| R02 | Extremely low follower/following ratio | Ratio < 0.2 (risk ≥ 40) |
-| R03 | High posting frequency | Posts/day > 20 (risk ≥ 40) |
-| R04 | Incomplete profile | Completeness < 60% (risk ≥ 40) |
-| R05 | Very low engagement | Engagement < 2% (risk ≥ 40) |
+| R01 | Very new account | Age < 90 days (risk ≥ 45) |
+| R02 | Extremely low follower/following ratio | Ratio < 0.5 (risk ≥ 40) |
+| R03 | High posting frequency | Posts/day > 10 (risk ≥ 40) |
+| R04 | Incomplete profile | Completeness ≤ 60% (risk ≥ 40) |
+| R05 | Very low engagement | Engagement < 5% (risk ≥ 40) |
 
 Reason codes are sorted by **weighted contribution** (highest first) to show which factors most influence the score.
 
