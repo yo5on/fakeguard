@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models import Account, Analysis
+from ..rate_limit import rate_limit
 from ..schemas import AccountCreate, ImportResult
 from ..scoring.risk_engine import analyze_account
 
@@ -30,7 +31,11 @@ def _format_validation_error(exc: ValidationError) -> str:
         parts.append(f"{field}: {err.get('msg', 'invalid value')}")
     return "; ".join(parts)
 
-@router.post("/csv", response_model=ImportResult)
+@router.post(
+    "/csv",
+    response_model=ImportResult,
+    dependencies=[Depends(rate_limit("import", "rate_limit_import_per_minute"))],
+)
 async def import_csv(file: UploadFile = File(...), db: Session = Depends(get_db)):
     """
     Import accounts from a CSV file and store an initial risk analysis for each

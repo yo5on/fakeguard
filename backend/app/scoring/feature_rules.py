@@ -1,4 +1,6 @@
-from typing import Tuple, Optional
+from typing import Optional, Tuple
+
+from .thresholds import ACCOUNT_AGE, ENGAGEMENT, FOLLOWER_RATIO, POSTING_FREQUENCY
 
 def calculate_account_age_risk(age_days: int) -> float:
     """
@@ -10,18 +12,8 @@ def calculate_account_age_risk(age_days: int) -> float:
     Returns:
         Risk score between 0-100
     """
-    if age_days > 365:
-        return 0.0
-    elif age_days >= 180:
-        return 10.0
-    elif age_days >= 90:
-        return 25.0
-    elif age_days >= 30:
-        return 45.0
-    elif age_days >= 7:
-        return 70.0
-    else:
-        return 90.0
+    return ACCOUNT_AGE.risk_for(age_days)
+
 
 def calculate_follower_ratio_risk(followers: int, following: int) -> Tuple[Optional[float], bool]:
     """
@@ -37,19 +29,8 @@ def calculate_follower_ratio_risk(followers: int, following: int) -> Tuple[Optio
     """
     if following == 0:
         return None, False
-    
-    ratio = followers / following
-    
-    if ratio >= 1.0:
-        return 0.0, True
-    elif ratio >= 0.5:
-        return 20.0, True
-    elif ratio >= 0.2:
-        return 40.0, True
-    elif ratio >= 0.05:
-        return 70.0, True
-    else:
-        return 90.0, True
+    return FOLLOWER_RATIO.risk_for(followers / following), True
+
 
 def calculate_posting_frequency_risk(posts_per_day: float) -> float:
     """
@@ -61,16 +42,8 @@ def calculate_posting_frequency_risk(posts_per_day: float) -> float:
     Returns:
         Risk score between 0-100
     """
-    if posts_per_day <= 5:
-        return 0.0
-    elif posts_per_day <= 10:
-        return 20.0
-    elif posts_per_day <= 20:
-        return 40.0
-    elif posts_per_day <= 50:
-        return 70.0
-    else:
-        return 90.0
+    return POSTING_FREQUENCY.risk_for(posts_per_day)
+
 
 def calculate_profile_completeness_risk(profile_completeness: float) -> float:
     """
@@ -99,16 +72,6 @@ def calculate_engagement_risk(avg_likes: float, avg_comments: float, followers: 
     """
     if followers == 0:
         return None, False
-    
     engagement_rate = ((avg_likes + avg_comments) / followers) * 100
-    
-    if engagement_rate >= 10:
-        return 0.0, True
-    elif engagement_rate >= 5:
-        return 20.0, True
-    elif engagement_rate >= 2:
-        return 40.0, True
-    elif engagement_rate >= 0.5:
-        return 70.0, True
-    else:
-        return 90.0, True
+    return ENGAGEMENT.risk_for(engagement_rate), True
+

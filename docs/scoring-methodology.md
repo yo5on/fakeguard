@@ -1,4 +1,4 @@
-"# FakeGuard Scoring Methodology
+# FakeGuard Scoring Methodology
 
 ## Overview
 
@@ -6,40 +6,46 @@ FakeGuard uses a transparent, rule-based scoring system to assess potential risk
 
 **Important:** This is a prototype system. Scoring weights and thresholds are heuristics intended for demonstration and are not official standards.
 
+**Single source of truth:** every weight, threshold, category boundary and reason-code trigger is defined once in [`backend/app/scoring/thresholds.py`](../backend/app/scoring/thresholds.py). The scoring engine evaluates those tables, the `GET /api/config/scoring` endpoint (and the in-app Methodology page) renders them, and the tables marked *generated* below are produced from them by `python scripts/render_methodology.py` (run from `backend/`). A backend test fails if this document falls out of date.
+
 ## Scoring Features
 
 The system evaluates five key features, each weighted based on its importance:
 
-| Feature | Weight | Description |
-|---------|--------|-------------|
-| Account Age | 20% | How long the account has existed |
-| Follower/Following Ratio | 25% | Balance between followers and following |
-| Posting Frequency | 20% | Average posts per day |
-| Profile Completeness | 15% | How complete the profile information is |
-| Engagement | 20% | User interaction rates |
+<!-- BEGIN GENERATED: weights -->
+| Feature | Weight |
+|---|---|
+| Account Age | 20% |
+| Follower/Following Ratio | 25% |
+| Posting Frequency | 20% |
+| Profile Completeness | 15% |
+| Engagement | 20% |
+<!-- END GENERATED: weights -->
 
-**Total Weight:** 100%
+**Total Weight:** 100% (enforced when the scoring module loads)
 
 ## Feature Details
 
-### 1. Account Age (20%)
+### 1. Account Age
 
 **Input:** `age_days` (integer)
 
 **Risk Calculation:**
 
-| Age Range | Risk Score |
-|-----------|------------|
-| > 365 days | 0 (lowest risk) |
-| 180-365 days | 10 |
-| 90-179 days | 25 |
-| 30-89 days | 45 |
-| 7-29 days | 70 |
-| 0-6 days | 90 (highest risk) |
+<!-- BEGIN GENERATED: account_age -->
+| Range | Risk Score |
+|---|---|
+| > 365 days | 0 |
+| ≥ 180 and ≤ 365 days | 10 |
+| ≥ 90 and < 180 days | 25 |
+| ≥ 30 and < 90 days | 45 |
+| ≥ 7 and < 30 days | 70 |
+| < 7 days | 90 |
+<!-- END GENERATED: account_age -->
 
 **Rationale:** Newly created accounts are more likely to be created for malicious purposes or spam. Older accounts have established history.
 
-### 2. Follower/Following Ratio (25%)
+### 2. Follower/Following Ratio
 
 **Input:** `followers` (integer), `following` (integer)
 
@@ -47,35 +53,39 @@ The system evaluates five key features, each weighted based on its importance:
 
 **Risk Calculation:**
 
-| Ratio Range | Risk Score |
-|-------------|------------|
-| ≥ 1.0 | 0 (lowest risk) |
-| 0.5 - 0.99 | 20 |
-| 0.2 - 0.49 | 40 |
-| 0.05 - 0.19 | 70 |
-| < 0.05 | 90 (highest risk) |
+<!-- BEGIN GENERATED: follower_ratio -->
+| Range | Risk Score |
+|---|---|
+| ≥ 1 | 0 |
+| ≥ 0.5 and < 1 | 20 |
+| ≥ 0.2 and < 0.5 | 40 |
+| ≥ 0.05 and < 0.2 | 70 |
+| < 0.05 | 90 |
+<!-- END GENERATED: follower_ratio -->
 
-**Special Case:** If `following = 0`, this feature is marked **unavailable** (cannot divide by zero). The feature is excluded and remaining weights are renormalized.
+**Special Case:** If `following = 0`, this feature is marked **unavailable** (cannot divide by zero) and is left out of the score; see [Missing Data Handling](#missing-data-handling).
 
 **Rationale:** Accounts that follow many users but have few followers may be engaged in follow-for-follow schemes or automated following. Legitimate accounts typically have balanced ratios.
 
-### 3. Posting Frequency (20%)
+### 3. Posting Frequency
 
 **Input:** `posts_per_day` (float)
 
 **Risk Calculation:**
 
-| Posts/Day | Risk Score |
-|-----------|------------|
-| ≤ 5 | 0 (lowest risk) |
-| 6-10 | 20 |
-| 11-20 | 40 |
-| 21-50 | 70 |
-| > 50 | 90 (highest risk) |
+<!-- BEGIN GENERATED: posting_frequency -->
+| Range | Risk Score |
+|---|---|
+| ≤ 5 posts/day | 0 |
+| > 5 and ≤ 10 posts/day | 20 |
+| > 10 and ≤ 20 posts/day | 40 |
+| > 20 and ≤ 50 posts/day | 70 |
+| > 50 posts/day | 90 |
+<!-- END GENERATED: posting_frequency -->
 
 **Rationale:** Extremely high posting frequencies may indicate automated bot behavior. Normal users typically post within moderate ranges.
 
-### 4. Profile Completeness (15%)
+### 4. Profile Completeness
 
 **Input:** `profile_completeness` (float, 0-100)
 
@@ -96,7 +106,7 @@ The system evaluates five key features, each weighted based on its importance:
 
 **Rationale:** Incomplete profiles may indicate throwaway accounts or accounts created quickly for malicious purposes.
 
-### 5. Engagement (20%)
+### 5. Engagement
 
 **Input:** `avg_likes` (float), `avg_comments` (float), `followers` (integer)
 
@@ -104,15 +114,17 @@ The system evaluates five key features, each weighted based on its importance:
 
 **Risk Calculation:**
 
-| Engagement Rate | Risk Score |
-|-----------------|------------|
-| ≥ 10% | 0 (lowest risk) |
-| 5-9.9% | 20 |
-| 2-4.9% | 40 |
-| 0.5-1.9% | 70 |
-| < 0.5% | 90 (highest risk) |
+<!-- BEGIN GENERATED: engagement -->
+| Range | Risk Score |
+|---|---|
+| ≥ 10% | 0 |
+| ≥ 5 and < 10% | 20 |
+| ≥ 2 and < 5% | 40 |
+| ≥ 0.5 and < 2% | 70 |
+| < 0.5% | 90 |
+<!-- END GENERATED: engagement -->
 
-**Special Case:** If `followers = 0`, this feature is marked **unavailable** (cannot divide by zero). The feature is excluded and remaining weights are renormalized.
+**Special Case:** If `followers = 0`, this feature is marked **unavailable** (cannot divide by zero) and is left out of the score; see [Missing Data Handling](#missing-data-handling).
 
 **Rationale:** Low engagement despite posting activity may indicate bot accounts or accounts with fake followers. Real users generate organic interactions.
 
@@ -160,14 +172,16 @@ final_score = sum(weighted_contributions) / sum(available_weights)
 
 ## Risk Categories
 
-Risk categories are determined using the **precise** internal score (not rounded):
+Risk categories are determined using the **precise** internal score (not rounded). Each category includes its lower bound and excludes its upper bound:
 
+<!-- BEGIN GENERATED: categories -->
 | Category | Score Range | Recommended Action |
-|----------|-------------|-------------------|
-| LOW | 0 - 29.9 | No immediate action |
-| MEDIUM | 30 - 59.9 | Monitor account |
-| HIGH | 60 - 79.9 | Manual review recommended |
-| CRITICAL | 80 - 100 | Priority investigation |
+|---|---|---|
+| LOW | 0 to < 30 | No immediate action |
+| MEDIUM | 30 to < 60 | Monitor account |
+| HIGH | 60 to < 80 | Manual review recommended |
+| CRITICAL | 80 to 100 | Priority investigation |
+<!-- END GENERATED: categories -->
 
 **Important:** Category is determined BEFORE rounding for display. A score of 29.95 is LOW, not MEDIUM.
 
@@ -179,14 +193,22 @@ Some features cannot be calculated when certain data is missing:
 - **Follower ratio** requires `following > 0`
 - **Engagement** requires `followers > 0`
 
-### Solution: Renormalization
+### Solution: Weighted Average of Available Features
 
 When a feature is unavailable:
 
-1. Mark feature as `available: false`
-2. Set `weighted_contribution = 0`
-3. Exclude feature weight from denominator
-4. Recalculate score using only available features
+1. It is marked `available: false` with `weighted_contribution = 0`.
+2. Its weight is left out of the denominator.
+3. The final score is the weighted average of the features that could be calculated:
+
+```
+final_score = sum(feature_risk × weight, available features)
+              / sum(weight, available features)
+```
+
+Dividing by the available weight is equivalent to rescaling the remaining weights so they sum to 1. Each remaining feature keeps its relative importance (for example, account age and posting frequency still count equally), and **the individual feature risks are not changed**. The missing feature is counted neither as zero risk nor as maximum risk.
+
+The `weighted_contribution` values in the response, and the "Weighted" figures in the UI, are calculated with the original weights, before this division. When features are missing they therefore add up to less than the final score. Their sum divided by `total_weight_used` equals the final score, and the UI shows that calculation.
 
 ### Example with Missing Data
 
@@ -217,21 +239,23 @@ Final score: 8.0 / 0.55 = 14.5
 
 **Result:** 14.5 / 100 → **LOW RISK**
 
-**Key Point:** The system does NOT assume maximum risk for missing features. It evaluates based on available information.
+**Key Point:** The system does NOT assume maximum (or minimum) risk for missing features. The score reflects only the features that could be measured, so with fewer features it rests on less evidence. Reviewers should check which features were unavailable (`total_weight_used` < 1).
 
 ## Reason Codes
 
 The system generates human-readable reason codes when specific risk indicators are detected:
 
+<!-- BEGIN GENERATED: reason_codes -->
 | Code | Description | Trigger |
-|------|-------------|---------|
-| R01 | Very new account | Age < 90 days (risk ≥ 45) |
-| R02 | Extremely low follower/following ratio | Ratio < 0.5 (risk ≥ 40) |
-| R03 | High posting frequency | Posts/day > 10 (risk ≥ 40) |
-| R04 | Incomplete profile | Completeness ≤ 60% (risk ≥ 40) |
-| R05 | Very low engagement | Engagement < 5% (risk ≥ 40) |
+|---|---|---|
+| R01 | Very new account | Account Age < 90 days (feature risk ≥ 45) |
+| R02 | Extremely low follower/following ratio | Follower/Following Ratio < 0.5 (feature risk ≥ 40) |
+| R03 | High posting frequency | Posting Frequency > 10 posts/day (feature risk ≥ 40) |
+| R04 | Incomplete profile | Profile Completeness ≤ 60% (feature risk ≥ 40) |
+| R05 | Very low engagement | Engagement < 5% (feature risk ≥ 40) |
+<!-- END GENERATED: reason_codes -->
 
-Reason codes are sorted by **weighted contribution** (highest first) to show which factors most influence the score.
+A reason code is generated when its feature is available and the feature risk reaches the trigger level. Reason codes are sorted by **weighted contribution** (highest first) to show which factors most influence the score.
 
 ## Transparency and Explainability
 
@@ -246,7 +270,7 @@ Every analysis result includes:
    - Availability status
    - Raw values
 5. **Reason codes** explaining specific concerns
-6. **Total weight used** (shows renormalization)
+6. **Total weight used**: the sum of the weights of the available features (1.0 when nothing is missing)
 
 This transparency allows reviewers to:
 - Understand why an account received its score
@@ -335,4 +359,4 @@ It should NOT be used for:
 - Production account moderation without validation
 - Automated enforcement actions
 - Legal proceedings without expert review
-- High-stakes decisions without human oversight"
+- High-stakes decisions without human oversight

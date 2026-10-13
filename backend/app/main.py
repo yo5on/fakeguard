@@ -1,20 +1,20 @@
 import os
 from contextlib import asynccontextmanager
 
-from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .config import get_settings, log_startup_warnings
 from .database import init_db
-from .routes import analysis, accounts, dashboard, import_data
-from .scoring.reason_codes import REASON_CODES
-from .scoring.risk_engine import FEATURE_WEIGHTS
-
-load_dotenv()
+from .rate_limit import rate_limit
+from .routes import analysis, accounts, auth, dashboard, import_data
+from .routes.auth import require_auth
+from .scoring.thresholds import scoring_config
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    log_startup_warnings(get_settings())
     init_db()
     yield
 
@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="FakeGuard API",
     description="Social Media Account Risk Analyzer",
-    version="1.1.0",
+    version="1.2.0",
     lifespan=lifespan,
 )
 
@@ -31,22 +31,30 @@ def parse_cors_origins(value: str) -> list[str]:
     return [origin.strip().rstrip("/") for origin in value.split(",") if origin.strip()]
 
 
-# CORS configuration. The API uses no cookies or auth headers, so credentials
-# are disabled; this keeps a wildcard origin from exposing credentialed requests.
+# CORS configuration. Auth uses a bearer token in the Authorization header (no
+# cookies), so credentials stay disabled and a wildcard origin can't be abused
+# for cookie-authenticated requests.
 cors_origins = parse_cors_origins(os.getenv("CORS_ORIGINS", "http://localhost:5173"))
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
     allow_credentials=False,
     allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
-# Include routers
-app.include_router(analysis.router)
-app.include_router(accounts.router)
-app.include_router(dashboard.router)
-app.include_router(import_data.router)
+# Rate limiting runs before authentication so unauthenticated floods are
+# throttled too. Health and the public scoring methodology stay open.
+protected = [
+    Depends(rate_limit("api", "rate_limit_api_per_minute")),
+    Depends(require_auth),
+]
+
+app.include_router(auth.router)
+app.include_router(analysis.router, dependencies=protected)
+app.include_router(accounts.router, dependencies=protected)
+app.include_router(dashboard.router, dependencies=protected)
+app.include_router(import_data.router, dependencies=protected)
 
 @app.get("/api/health")
 def health_check():
@@ -55,61 +63,5 @@ def health_check():
 
 @app.get("/api/config/scoring")
 def get_scoring_config():
-    """Get scoring configuration and methodology."""
-    return {
-        "features": {
-            "account_age": {
-                "weight": FEATURE_WEIGHTS["account_age"],
-                "thresholds": {
-                    ">365 days": 0,
-                    "180-365 days": 10,
-                    "90-179 days": 25,
-                    "30-89 days": 45,
-                    "7-29 days": 70,
-                    "0-6 days": 90
-                }
-            },
-            "follower_ratio": {
-                "weight": FEATURE_WEIGHTS["follower_ratio"],
-                "thresholds": {
-                    ">=1.0": 0,
-                    "0.5-0.99": 20,
-                    "0.2-0.49": 40,
-                    "0.05-0.19": 70,
-                    "<0.05": 90
-                }
-            },
-            "posting_frequency": {
-                "weight": FEATURE_WEIGHTS["posting_frequency"],
-                "thresholds": {
-                    "<=5 posts/day": 0,
-                    "6-10 posts/day": 20,
-                    "11-20 posts/day": 40,
-                    "21-50 posts/day": 70,
-                    ">50 posts/day": 90
-                }
-            },
-            "profile_completeness": {
-                "weight": FEATURE_WEIGHTS["profile_completeness"],
-                "formula": "risk = 100 - completeness"
-            },
-            "engagement": {
-                "weight": FEATURE_WEIGHTS["engagement"],
-                "thresholds": {
-                    ">=10%": 0,
-                    "5-9.9%": 20,
-                    "2-4.9%": 40,
-                    "0.5-1.9%": 70,
-                    "<0.5%": 90
-                }
-            }
-        },
-        "categories": {
-            "LOW": {"range": "0-29.9", "action": "No immediate action"},
-            "MEDIUM": {"range": "30-59.9", "action": "Monitor account"},
-            "HIGH": {"range": "60-79.9", "action": "Manual review recommended"},
-            "CRITICAL": {"range": "80-100", "action": "Priority investigation"}
-        },
-        "reason_codes": REASON_CODES,
-        "disclaimer": "The scoring weights and thresholds are prototype heuristics intended for demonstration and evaluation. They are not official government, law-enforcement, or social-media-platform standards."
-    }
+    """Scoring configuration and methodology, generated from the same tables the engine uses."""
+    return scoring_config()

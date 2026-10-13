@@ -48,8 +48,9 @@ def get_accounts(
     )
 
     if search and search.strip():
-        # autoescape so '_' and '%' in usernames are matched literally
-        query = query.filter(Account.username.contains(search.strip(), autoescape=True))
+        # Case-insensitive on every backend (SQLite LIKE already is; PostgreSQL
+        # LIKE is not). autoescape so "_" and "%" in usernames match literally.
+        query = query.filter(Account.username.icontains(search.strip(), autoescape=True))
 
     if category:
         query = query.filter(Analysis.category == category)

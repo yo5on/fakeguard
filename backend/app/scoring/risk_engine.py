@@ -1,4 +1,5 @@
-from typing import Dict, List, Any
+from typing import Any, Dict
+
 from .feature_rules import (
     calculate_account_age_risk,
     calculate_follower_ratio_risk,
@@ -7,52 +8,33 @@ from .feature_rules import (
     calculate_engagement_risk
 )
 from .reason_codes import get_reason_codes
+from .thresholds import CATEGORY_ACTIONS, FEATURE_LABELS, FEATURE_WEIGHTS, category_for
 
-# Feature weights (must sum to 100%)
-FEATURE_WEIGHTS = {
-    "account_age": 0.20,
-    "follower_ratio": 0.25,
-    "posting_frequency": 0.20,
-    "profile_completeness": 0.15,
-    "engagement": 0.20
-}
+__all__ = ["FEATURE_WEIGHTS", "analyze_account", "get_recommended_action", "get_risk_category"]
 
 def get_risk_category(score: float) -> str:
     """
     Determine risk category based on precise score.
-    
+
     Args:
         score: Risk score (0-100)
-        
+
     Returns:
         Risk category string
     """
-    if score < 30:
-        return "LOW"
-    elif score < 60:
-        return "MEDIUM"
-    elif score < 80:
-        return "HIGH"
-    else:
-        return "CRITICAL"
+    return category_for(score)
 
 def get_recommended_action(category: str) -> str:
     """
     Get recommended action based on risk category.
-    
+
     Args:
         category: Risk category
-        
+
     Returns:
         Recommended action string
     """
-    actions = {
-        "LOW": "No immediate action",
-        "MEDIUM": "Monitor account",
-        "HIGH": "Manual review recommended",
-        "CRITICAL": "Priority investigation"
-    }
-    return actions.get(category, "Unknown")
+    return CATEGORY_ACTIONS.get(category, "Unknown")
 
 def analyze_account(
     username: str,
@@ -89,7 +71,7 @@ def analyze_account(
     age_weight = FEATURE_WEIGHTS["account_age"]
     age_contribution = age_risk * age_weight
     features["account_age"] = {
-        "feature": "Account Age",
+        "feature": FEATURE_LABELS["account_age"],
         "risk_score": age_risk,
         "weighted_contribution": age_contribution,
         "available": True,
@@ -105,7 +87,7 @@ def analyze_account(
         ratio_contribution = ratio_risk * ratio_weight
         ratio_value = followers / following if following > 0 else 0
         features["follower_ratio"] = {
-            "feature": "Follower/Following Ratio",
+            "feature": FEATURE_LABELS["follower_ratio"],
             "risk_score": ratio_risk,
             "weighted_contribution": ratio_contribution,
             "available": True,
@@ -115,7 +97,7 @@ def analyze_account(
         total_weight_used += ratio_weight
     else:
         features["follower_ratio"] = {
-            "feature": "Follower/Following Ratio",
+            "feature": FEATURE_LABELS["follower_ratio"],
             "risk_score": 0.0,
             "weighted_contribution": 0.0,
             "available": False,
@@ -127,7 +109,7 @@ def analyze_account(
     posting_weight = FEATURE_WEIGHTS["posting_frequency"]
     posting_contribution = posting_risk * posting_weight
     features["posting_frequency"] = {
-        "feature": "Posting Frequency",
+        "feature": FEATURE_LABELS["posting_frequency"],
         "risk_score": posting_risk,
         "weighted_contribution": posting_contribution,
         "available": True,
@@ -141,7 +123,7 @@ def analyze_account(
     profile_weight = FEATURE_WEIGHTS["profile_completeness"]
     profile_contribution = profile_risk * profile_weight
     features["profile_completeness"] = {
-        "feature": "Profile Completeness",
+        "feature": FEATURE_LABELS["profile_completeness"],
         "risk_score": profile_risk,
         "weighted_contribution": profile_contribution,
         "available": True,
@@ -157,7 +139,7 @@ def analyze_account(
         engagement_contribution = engagement_risk * engagement_weight
         engagement_rate = ((avg_likes + avg_comments) / followers) * 100 if followers > 0 else 0
         features["engagement"] = {
-            "feature": "Engagement",
+            "feature": FEATURE_LABELS["engagement"],
             "risk_score": engagement_risk,
             "weighted_contribution": engagement_contribution,
             "available": True,
@@ -167,7 +149,7 @@ def analyze_account(
         total_weight_used += engagement_weight
     else:
         features["engagement"] = {
-            "feature": "Engagement",
+            "feature": FEATURE_LABELS["engagement"],
             "risk_score": 0.0,
             "weighted_contribution": 0.0,
             "available": False,
