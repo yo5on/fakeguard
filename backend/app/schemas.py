@@ -1,43 +1,44 @@
-from pydantic import BaseModel, Field, field_validator
-from typing import Optional, List, Dict, Any
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+# Upper bounds keep values inside SQLite's 64-bit integer range and reject
+# obviously malformed input; they are far above any real-world account.
+MAX_COUNT = 10_000_000_000
+MAX_RATE = 1_000_000_000.0
 
 class AccountBase(BaseModel):
+    model_config = ConfigDict(allow_inf_nan=False)
+
     username: str = Field(..., min_length=1, max_length=255)
-    age_days: int = Field(..., ge=0)
-    followers: int = Field(..., ge=0)
-    following: int = Field(..., ge=0)
-    posts_per_day: float = Field(..., ge=0)
+    age_days: int = Field(..., ge=0, le=MAX_COUNT)
+    followers: int = Field(..., ge=0, le=MAX_COUNT)
+    following: int = Field(..., ge=0, le=MAX_COUNT)
+    posts_per_day: float = Field(..., ge=0, le=MAX_RATE)
     profile_completeness: float = Field(..., ge=0, le=100)
-    avg_likes: float = Field(..., ge=0)
-    avg_comments: float = Field(..., ge=0)
-    archetype: Optional[str] = None
+    avg_likes: float = Field(..., ge=0, le=MAX_RATE)
+    avg_comments: float = Field(..., ge=0, le=MAX_RATE)
+    archetype: Optional[str] = Field(None, max_length=100)
 
-    @field_validator('age_days', 'followers', 'following', 'posts_per_day', 
-                     'avg_likes', 'avg_comments', 'profile_completeness')
+    @field_validator('username', mode='before')
     @classmethod
-    def check_non_negative(cls, v, info):
-        if v < 0:
-            raise ValueError(f'{info.field_name} cannot be negative')
-        return v
-
-    @field_validator('profile_completeness')
-    @classmethod
-    def check_profile_completeness_range(cls, v):
-        if v < 0 or v > 100:
-            raise ValueError('profile_completeness must be between 0 and 100')
+    def strip_username(cls, v):
+        if isinstance(v, str):
+            v = v.strip()
+            if not v:
+                raise ValueError('username cannot be blank')
         return v
 
 class AccountCreate(AccountBase):
     pass
 
 class Account(AccountBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     created_at: datetime
     updated_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class FeatureAnalysis(BaseModel):
     feature: str
@@ -67,15 +68,14 @@ class AnalysisResponse(BaseModel):
     timestamp: datetime
 
 class AnalysisRecord(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     account_id: int
     risk_score: float
     category: str
     recommended_action: str
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class DashboardSummary(BaseModel):
     total_accounts: int

@@ -1,33 +1,46 @@
+import os
+from contextlib import asynccontextmanager
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import os
-from dotenv import load_dotenv
 
 from .database import init_db
 from .routes import analysis, accounts, dashboard, import_data
+from .scoring.reason_codes import REASON_CODES
+from .scoring.risk_engine import FEATURE_WEIGHTS
 
 load_dotenv()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
 
 app = FastAPI(
     title="FakeGuard API",
     description="Social Media Account Risk Analyzer",
-    version="1.0.0"
+    version="1.1.0",
+    lifespan=lifespan,
 )
 
-# CORS configuration
-cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
+
+def parse_cors_origins(value: str) -> list[str]:
+    return [origin.strip().rstrip("/") for origin in value.split(",") if origin.strip()]
+
+
+# CORS configuration. The API uses no cookies or auth headers, so credentials
+# are disabled; this keeps a wildcard origin from exposing credentialed requests.
+cors_origins = parse_cors_origins(os.getenv("CORS_ORIGINS", "http://localhost:5173"))
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
-
-# Initialize database on startup
-@app.on_event("startup")
-def startup_event():
-    init_db()
 
 # Include routers
 app.include_router(analysis.router)
@@ -43,9 +56,6 @@ def health_check():
 @app.get("/api/config/scoring")
 def get_scoring_config():
     """Get scoring configuration and methodology."""
-    from .scoring.risk_engine import FEATURE_WEIGHTS
-    from .scoring.reason_codes import REASON_CODES
-    
     return {
         "features": {
             "account_age": {

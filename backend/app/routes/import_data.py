@@ -1,92 +1,127 @@
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
-from sqlalchemy.orm import Session
-import pandas as pd
+import csv
 import io
-from typing import List
+import json
+import os
+
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from pydantic import ValidationError
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import Account
-from ..schemas import ImportResult, AccountCreate
+from ..models import Account, Analysis
+from ..schemas import AccountCreate, ImportResult
+from ..scoring.risk_engine import analyze_account
 
 router = APIRouter(prefix="/api/import", tags=["import"])
+
+MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", str(5 * 1024 * 1024)))
+MAX_ERRORS_REPORTED = 50
+
+REQUIRED_COLUMNS = [
+    'username', 'age_days', 'followers', 'following',
+    'posts_per_day', 'profile_completeness', 'avg_likes', 'avg_comments'
+]
+
+def _format_validation_error(exc: ValidationError) -> str:
+    parts = []
+    for err in exc.errors():
+        field = ".".join(str(loc) for loc in err.get("loc", ())) or "row"
+        parts.append(f"{field}: {err.get('msg', 'invalid value')}")
+    return "; ".join(parts)
 
 @router.post("/csv", response_model=ImportResult)
 async def import_csv(file: UploadFile = File(...), db: Session = Depends(get_db)):
     """
-    Import accounts from CSV file.
+    Import accounts from a CSV file and store an initial risk analysis for each
+    imported account, so the dashboard reflects the batch immediately.
+
+    Rows whose username already exists (in the database or earlier in the same
+    file) are skipped; invalid rows are reported.
     """
-    if not file.filename.endswith('.csv'):
+    if not file.filename or not file.filename.lower().endswith('.csv'):
         raise HTTPException(status_code=400, detail="File must be a CSV")
-    
+
+    contents = await file.read(MAX_UPLOAD_BYTES + 1)
+    if len(contents) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large (max {MAX_UPLOAD_BYTES // (1024 * 1024)} MB)"
+        )
+
     try:
-        contents = await file.read()
-        df = pd.read_csv(io.StringIO(contents.decode('utf-8')))
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error reading CSV: {str(e)}")
-    
-    required_columns = [
-        'username', 'age_days', 'followers', 'following',
-        'posts_per_day', 'profile_completeness', 'avg_likes', 'avg_comments'
-    ]
-    
-    missing_columns = [col for col in required_columns if col not in df.columns]
+        text = contents.decode('utf-8-sig')
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="CSV must be UTF-8 encoded")
+
+    reader = csv.DictReader(io.StringIO(text))
+    columns = [c.strip() for c in (reader.fieldnames or [])]
+    reader.fieldnames = columns
+
+    missing_columns = [col for col in REQUIRED_COLUMNS if col not in columns]
     if missing_columns:
         raise HTTPException(
             status_code=400,
             detail=f"Missing required columns: {', '.join(missing_columns)}"
         )
-    
+
     imported = 0
     skipped = 0
     errors = []
-    
-    for idx, row in df.iterrows():
+    seen_usernames = set()
+
+    try:
+        rows = list(reader)
+    except csv.Error as e:
+        raise HTTPException(status_code=400, detail=f"Malformed CSV: {e}")
+
+    # Line 1 is the header, so data rows start at line 2.
+    for line_no, row in enumerate(rows, start=2):
+        if not any((value or "").strip() for value in row.values() if isinstance(value, str)):
+            continue  # ignore blank lines
+
+        raw = {col: (row.get(col) or "").strip() for col in REQUIRED_COLUMNS}
+        archetype = (row.get('archetype') or "").strip() or None
+
         try:
-            # Validate data
-            account_data = {
-                'username': str(row['username']),
-                'age_days': int(row['age_days']),
-                'followers': int(row['followers']),
-                'following': int(row['following']),
-                'posts_per_day': float(row['posts_per_day']),
-                'profile_completeness': float(row['profile_completeness']),
-                'avg_likes': float(row['avg_likes']),
-                'avg_comments': float(row['avg_comments']),
-                'archetype': str(row['archetype']) if 'archetype' in row and pd.notna(row['archetype']) else None
-            }
-            
-            # Validate using Pydantic
-            validated = AccountCreate(**account_data)
-            
-            # Check if username already exists
-            existing = db.query(Account).filter(
-                Account.username == validated.username
-            ).first()
-            
-            if existing:
-                skipped += 1
-                continue
-            
-            # Create account
-            db_account = Account(**validated.model_dump())
-            db.add(db_account)
-            imported += 1
-            
-        except ValueError as e:
-            errors.append(f"Row {idx + 2}: {str(e)}")
+            # Pydantic does strict-enough coercion: "12.7" is rejected for int
+            # fields instead of being silently truncated.
+            validated = AccountCreate(**raw, archetype=archetype)
+        except ValidationError as e:
+            errors.append(f"Row {line_no}: {_format_validation_error(e)}")
             skipped += 1
-        except Exception as e:
-            errors.append(f"Row {idx + 2}: Validation error - {str(e)}")
+            continue
+
+        if validated.username in seen_usernames:
             skipped += 1
-    
+            continue
+
+        existing = db.query(Account.id).filter(Account.username == validated.username).first()
+        if existing:
+            skipped += 1
+            continue
+
+        seen_usernames.add(validated.username)
+        fields = validated.model_dump()
+        result = analyze_account(**{k: v for k, v in fields.items() if k != "archetype"})
+        account = Account(**fields)
+        account.analyses.append(Analysis(
+            risk_score=result["risk_score"],
+            category=result["category"],
+            recommended_action=result["recommended_action"],
+            analysis_json=json.dumps(result),
+        ))
+        db.add(account)
+        imported += 1
+
     try:
         db.commit()
-    except Exception as e:
+    except SQLAlchemyError:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
-    
+        raise HTTPException(status_code=500, detail="Database error while saving imported accounts")
+
     return {
         "imported": imported,
         "skipped": skipped,
-        "errors": errors[:50]  # Limit error messages
+        "errors": errors[:MAX_ERRORS_REPORTED]
     }

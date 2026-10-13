@@ -1,42 +1,10 @@
-import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from app.main import app
-from app.database import Base, get_db
-from app.models import Account
-
-# Create test database
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Override database dependency
-def override_get_db():
-    try:
-        db = TestingSessionLocal()
-        yield db
-    finally:
-        db.close()
-
-app.dependency_overrides[get_db] = override_get_db
-
-client = TestClient(app)
-
-@pytest.fixture(autouse=True)
-def setup_database():
-    """Create test database before each test and drop after."""
-    Base.metadata.create_all(bind=engine)
-    yield
-    Base.metadata.drop_all(bind=engine)
-
-def test_health_check():
+def test_health_check(client):
     """Test health check endpoint."""
     response = client.get("/api/health")
     assert response.status_code == 200
     assert response.json()["status"] == "healthy"
 
-def test_analyze_account():
+def test_analyze_account(client):
     """Test account analysis endpoint."""
     account_data = {
         "username": "test_user",
@@ -60,7 +28,7 @@ def test_analyze_account():
     assert "category" in data["analysis"]
     assert "features" in data["analysis"]
 
-def test_analyze_invalid_data():
+def test_analyze_invalid_data(client):
     """Test analysis with invalid data."""
     # Negative age
     response = client.post("/api/analyze", json={
@@ -88,7 +56,7 @@ def test_analyze_invalid_data():
     })
     assert response.status_code == 422
 
-def test_create_account():
+def test_create_account(client):
     """Test account creation."""
     account_data = {
         "username": "new_user",
@@ -108,7 +76,7 @@ def test_create_account():
     assert data["username"] == "new_user"
     assert "id" in data
 
-def test_get_accounts():
+def test_get_accounts(client):
     """Test getting accounts with pagination."""
     # Create test accounts
     for i in range(5):
@@ -132,7 +100,7 @@ def test_get_accounts():
     assert len(data["accounts"]) == 3
     assert data["total"] == 5
 
-def test_get_account_by_id():
+def test_get_account_by_id(client):
     """Test getting a specific account."""
     # Create account
     create_response = client.post("/api/accounts", json={
@@ -153,7 +121,7 @@ def test_get_account_by_id():
     data = response.json()
     assert data["username"] == "specific_user"
 
-def test_analyze_existing_account():
+def test_analyze_existing_account(client):
     """Test analyzing an existing account."""
     # Create account
     create_response = client.post("/api/accounts", json={
@@ -175,7 +143,7 @@ def test_analyze_existing_account():
     assert "analysis" in data
     assert data["analysis"]["risk_score"] > 0
 
-def test_dashboard_summary():
+def test_dashboard_summary(client):
     """Test dashboard summary endpoint."""
     # Create and analyze some accounts
     for i in range(3):
@@ -200,7 +168,7 @@ def test_dashboard_summary():
     assert "low_risk" in data
     assert "average_risk_score" in data
 
-def test_scoring_config():
+def test_scoring_config(client):
     """Test scoring configuration endpoint."""
     response = client.get("/api/config/scoring")
     assert response.status_code == 200

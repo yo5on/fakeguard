@@ -1,0 +1,6 @@
+-r requirements.txt
+pytest==9.1.1
+httpx2==2.13.1
+# Only needed for scripts/generate_synthetic_data.py
+pandas==3.0.6
+numpy

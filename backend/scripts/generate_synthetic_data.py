@@ -1,6 +1,7 @@
+from pathlib import Path
+
 import pandas as pd
 import numpy as np
-from datetime import datetime
 
 # Set random seed for reproducibility
 np.random.seed(42)
@@ -284,7 +285,8 @@ def main():
     df = pd.DataFrame(all_accounts)
     
     # Save to CSV
-    output_path = '../data/synthetic_accounts.csv'
+    # Resolve relative to this file so the script works from any directory.
+    output_path = Path(__file__).resolve().parent.parent / 'data' / 'synthetic_accounts.csv'
     df.to_csv(output_path, index=False)
     
     print(f"Generated {len(all_accounts)} synthetic accounts")
