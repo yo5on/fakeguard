@@ -1,4 +1,4 @@
-"# FakeGuard - SIH Demo Guide
+# FakeGuard - SIH Demo Guide
 
 This guide provides a complete walkthrough for demonstrating FakeGuard during the Smart India Hackathon presentation.
 
@@ -50,9 +50,9 @@ npm run dev
 Import the synthetic dataset:
 
 1. Navigate to Accounts page
-2. Click \"Choose CSV File\"
+2. Click "Choose CSV File"
 3. Select `backend/data/synthetic_accounts.csv`
-4. Click \"Import\"
+4. Click "Import"
 5. Verify import success (should show ~1000 imported accounts)
 6. Return to Dashboard to see populated statistics
 
@@ -61,7 +61,7 @@ Import the synthetic dataset:
 ### Part 1: Problem Statement (2 minutes)
 
 **Script:**
-> \"Social media platforms face a critical challenge: identifying fake or suspicious accounts at scale. Manual review is time-consuming, and automated systems lack transparency. Our solution, FakeGuard, is a decision-support tool that helps human reviewers prioritize their work using explainable risk scoring.\"
+> "Social media platforms face a critical challenge: identifying fake or suspicious accounts at scale. Manual review is time-consuming, and automated systems lack transparency. Our solution, FakeGuard, is a decision-support tool that helps human reviewers prioritize their work using explainable risk scoring."
 
 **Key Points:**
 - Emphasize human-in-the-loop approach
@@ -89,7 +89,7 @@ Import the synthetic dataset:
    - Explain this helps reviewers focus on priorities
 
 **Script:**
-> \"The dashboard provides an at-a-glance view of the account population. Reviewers can immediately see how many accounts require attention and where to focus their efforts.\"
+> "The dashboard provides an at-a-glance view of the account population. Reviewers can immediately see how many accounts require attention and where to focus their efforts."
 
 ### Part 3: Account Analysis (5 minutes)
 
@@ -113,10 +113,10 @@ Import the synthetic dataset:
 - Risk gauge shows green/low score
 - All features contribute minimally
 - No significant reason codes
-- Recommended action: \"No immediate action\"
+- Recommended action: "No immediate action"
 
 **Script:**
-> \"Here's a typical legitimate account. Notice how each feature is evaluated independently, and the system explains why this account is low risk.\"
+> "Here's a typical legitimate account. Notice how each feature is evaluated independently, and the system explains why this account is low risk."
 
 #### Demo 3B: Suspicious Account
 
@@ -136,10 +136,10 @@ Import the synthetic dataset:
 - Risk gauge shows red/critical score
 - Multiple red flags in feature breakdown
 - Several reason codes generated (R01, R02, R03, R04, R05)
-- Recommended action: \"Priority investigation\"
+- Recommended action: "Priority investigation"
 
 **Script:**
-> \"This account exhibits multiple bot-like behaviors: it's brand new, follows thousands but has few followers, posts excessively, has an incomplete profile, and gets minimal engagement. Each of these contributes to the high risk score, and the system explains exactly why.\"
+> "This account exhibits multiple bot-like behaviors: it's brand new, follows thousands but has few followers, posts excessively, has an incomplete profile, and gets minimal engagement. Each of these contributes to the high risk score, and the system explains exactly why."
 
 #### Demo 3C: Edge Case - Zero Followers
 
@@ -157,12 +157,12 @@ Import the synthetic dataset:
 
 **Points to Highlight:**
 - System does NOT crash
-- Engagement and follower ratio marked as \"Unavailable\"
+- Engagement and follower ratio marked as "Unavailable"
 - Score calculated from remaining 3 features
 - Renormalization explained in methodology
 
 **Script:**
-> \"Notice how the system handles missing data gracefully. When engagement can't be calculated because there are zero followers, the system marks it unavailable and recalculates the score using only the remaining features. It doesn't assume maximum risk.\"
+> "Notice how the system handles missing data gracefully. When engagement can't be calculated because there are zero followers, the system marks it unavailable and recalculates the score using only the remaining features. It doesn't assume maximum risk."
 
 ### Part 4: Feature Breakdown Deep Dive (3 minutes)
 
@@ -186,7 +186,7 @@ Import the synthetic dataset:
    - Mention human review requirement
 
 **Script:**
-> \"Every decision is explainable. Reviewers can see exactly which features contributed to the risk score and by how much. This transparency is crucial for accountability and trust in the system.\"
+> "Every decision is explainable. Reviewers can see exactly which features contributed to the risk score and by how much. This transparency is crucial for accountability and trust in the system."
 
 ### Part 5: Account Management (3 minutes)
 
@@ -195,11 +195,11 @@ Import the synthetic dataset:
 **Demonstrate:**
 
 1. **Search Functionality**
-   - Search for \"suspicious\"
+   - Search for "suspicious"
    - Show filtered results
 
 2. **Category Filtering**
-   - Select \"HIGH\" from dropdown
+   - Select "HIGH" from dropdown
    - Show only high-risk accounts
 
 3. **Sorting**
@@ -212,7 +212,7 @@ Import the synthetic dataset:
    - Demonstrate moving between pages
 
 **Script:**
-> \"Reviewers can quickly find specific accounts, filter by risk category, and sort by various metrics to prioritize their workflow.\"
+> "Reviewers can quickly find specific accounts, filter by risk category, and sort by various metrics to prioritize their workflow."
 
 ### Part 6: Individual Account View (2 minutes)
 
@@ -229,12 +229,12 @@ Import the synthetic dataset:
    - Risk gauge, category, breakdown, reasons
 
 3. **Re-analyze Button**
-   - Click \"Re-analyze Account\"
+   - Click "Re-analyze Account"
    - Show analysis updating
    - Explain historical tracking (analyses are not overwritten)
 
 **Script:**
-> \"Each account has a dedicated detail page showing all information and analysis results. Reviewers can re-analyze accounts at any time, and all analysis history is preserved.\"
+> "Each account has a dedicated detail page showing all information and analysis results. Reviewers can re-analyze accounts at any time, and all analysis history is preserved."
 
 ### Part 7: Scoring Methodology (2 minutes)
 
@@ -258,7 +258,7 @@ Import the synthetic dataset:
    - Emphasize prototype nature
 
 **Script:**
-> \"Complete transparency is built into the system. Anyone can view the exact methodology, weights, and thresholds used. This page serves as documentation for reviewers and auditors.\"
+> "Complete transparency is built into the system. Anyone can view the exact methodology, weights, and thresholds used. This page serves as documentation for reviewers and auditors."
 
 ### Part 8: CSV Import (1 minute)
 
@@ -272,7 +272,7 @@ Import the synthetic dataset:
    - Point out import results (imported/skipped/errors)
 
 **Script:**
-> \"Organizations can bulk-import accounts from CSV files for batch analysis. The system validates data, reports errors, and handles duplicates gracefully.\"
+> "Organizations can bulk-import accounts from CSV files for batch analysis. The system validates data, reports errors, and handles duplicates gracefully."
 
 ### Part 9: Technical Architecture (2 minutes)
 
@@ -292,7 +292,7 @@ Import the synthetic dataset:
    - Charts: Recharts
 
 **Script:**
-> \"The system is built with modern, industry-standard technologies. FastAPI provides automatic API documentation, Pydantic ensures data validation, and React creates a responsive user interface.\"
+> "The system is built with modern, industry-standard technologies. FastAPI provides automatic API documentation, Pydantic ensures data validation, and React creates a responsive user interface."
 
 ### Part 10: Testing and Reliability (2 minutes)
 
@@ -311,7 +311,7 @@ pytest tests/ -v
 - Edge case coverage
 
 **Script:**
-> \"The system includes comprehensive automated tests covering feature calculation, risk scoring, edge cases like zero values, and API endpoints. All 24 tests pass, demonstrating reliability.\"
+> "The system includes comprehensive automated tests covering feature calculation, risk scoring, edge cases like zero values, and API endpoints. All 24 tests pass, demonstrating reliability."
 
 ### Part 11: Future Scope (2 minutes)
 
@@ -336,7 +336,7 @@ pytest tests/ -v
    - Performance optimization for millions of accounts
 
 **Script:**
-> \"While the current system uses rule-based scoring, future versions could incorporate machine learning for anomaly detection while maintaining explainability. Additional signals like content analysis and network connections could further improve accuracy.\"
+> "While the current system uses rule-based scoring, future versions could incorporate machine learning for anomaly detection while maintaining explainability. Additional signals like content analysis and network connections could further improve accuracy."
 
 ### Part 12: Q&A Preparation
 
@@ -394,10 +394,10 @@ A: The feature framework is platform-agnostic. Specific thresholds and weights m
 
 ### What NOT to Say
 
-- \"This detects all fake accounts\"
-- \"100% accurate\"
-- \"Better than existing systems\" (without proof)
-- \"Ready for production\" (it's a prototype)
+- "This detects all fake accounts"
+- "100% accurate"
+- "Better than existing systems" (without proof)
+- "Ready for production" (it's a prototype)
 - Any claims about real platforms or real data
 
 ## Post-Demo
@@ -463,4 +463,4 @@ python scripts/generate_synthetic_data.py
 - Check browser console for errors
 - Refresh page and try again
 
-Good luck with your presentation!"
+Good luck with your presentation!

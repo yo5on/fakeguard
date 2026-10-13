@@ -1,4 +1,4 @@
-"# FakeGuard - Quick Start Guide
+# FakeGuard - Quick Start Guide
 
 Get the system running in 5 minutes.
 
@@ -17,8 +17,12 @@ cd backend
 # Install dependencies
 pip install -r requirements-dev.txt
 
+# Local settings: the example disables sign-in for the local demo.
+# (Without a .env, data endpoints return 503 until auth is configured.)
+cp .env.example .env
+
 # Start server
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 --no-proxy-headers
 ```
 
 ✅ Backend running at http://localhost:8000  
@@ -42,11 +46,11 @@ npm run dev
 ## Step 3: Import Data (1 minute)
 
 1. Open http://localhost:5173
-2. Click \"Accounts\" in navigation
-3. Click \"Choose CSV File\"
+2. Click "Accounts" in navigation
+3. Click "Choose CSV File"
 4. Select `backend/data/synthetic_accounts.csv`
-5. Click \"Import\"
-6. Wait for \"Imported: 1006\" message (each imported account is scored automatically)
+5. Click "Import"
+6. Wait for "Imported: 1006" message (each imported account is scored automatically)
 
 ✅ Data loaded!
 
@@ -127,4 +131,4 @@ All documentation is in:
 
 ---
 
-**System Status:** ✅ READY FOR DEMO"
+**System Status:** ✅ READY FOR DEMO

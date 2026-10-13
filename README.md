@@ -53,9 +53,10 @@
 fakeguard/
 ├── frontend/                  # React frontend
 │   ├── src/
+│   │   ├── auth/              # AuthProvider, RequireAuth, session storage
 │   │   ├── components/        # Gauge, badges, breakdown, shared states
 │   │   ├── hooks/             # useDebouncedValue
-│   │   ├── pages/             # Dashboard, Analyzer, Accounts, AccountDetails, Methodology
+│   │   ├── pages/             # Login, Dashboard, Analyzer, Accounts, AccountDetails, Methodology
 │   │   ├── services/api.ts    # Typed API client + error formatting
 │   │   ├── types/
 │   │   ├── utils/             # Analyzer form parsing/validation
@@ -67,20 +68,24 @@ fakeguard/
 │   └── package.json
 ├── backend/                   # FastAPI backend
 │   ├── app/
-│   │   ├── routes/            # accounts, analysis, dashboard, import_data
-│   │   ├── scoring/           # feature rules, reason codes, risk engine
-│   │   ├── database.py
+│   │   ├── routes/            # auth, accounts, analysis, dashboard, import_data
+│   │   ├── scoring/           # thresholds.py (single source of truth), rules, engine
+│   │   ├── config.py          # environment settings
+│   │   ├── security.py        # password hashing + signed tokens (stdlib only)
+│   │   ├── rate_limit.py      # in-memory sliding-window limiter
+│   │   ├── database.py        # SQLite / PostgreSQL engine
 │   │   ├── models.py
 │   │   ├── queries.py         # shared "latest analysis" queries
 │   │   ├── schemas.py
 │   │   └── main.py
-│   ├── scripts/               # synthetic data generator
+│   ├── scripts/               # data generator, DB migration, methodology doc renderer
 │   ├── data/                  # synthetic_accounts.csv (1,006 rows)
 │   ├── tests/
 │   ├── .env.example
 │   ├── requirements.txt       # runtime dependencies
 │   └── requirements-dev.txt   # + test / data-generation tools
-└── docs/
+├── docs/
+└── render.yaml                # Render Blueprint (backend + PostgreSQL)
 ```
 
 ---
@@ -99,14 +104,18 @@ fakeguard/
 
 <samp><b>Risk Categories</b></samp>
 
-- <samp><b>LOW (0-29.9):</b> No immediate action</samp>
-- <samp><b>MEDIUM (30-59.9):</b> Monitor account</samp>
-- <samp><b>HIGH (60-79.9):</b> Manual review recommended</samp>
-- <samp><b>CRITICAL (80-100):</b> Priority investigation</samp>
+- <samp><b>LOW (0 to &lt; 30):</b> No immediate action</samp>
+- <samp><b>MEDIUM (30 to &lt; 60):</b> Monitor account</samp>
+- <samp><b>HIGH (60 to &lt; 80):</b> Manual review recommended</samp>
+- <samp><b>CRITICAL (80 to 100):</b> Priority investigation</samp>
 
 <samp><b>Missing Data Handling</b></samp>
 
-<samp>When metrics cannot be calculated (e.g., engagement when followers = 0), the feature is marked unavailable and the remaining features are renormalized. This prevents artificially inflating risk scores due to missing data.</samp>
+<samp>The follower/following ratio cannot be calculated when following = 0, and engagement cannot be calculated when followers = 0. An unavailable feature is left out, and the score is the weighted average of the features that remain: <code>sum(risk × weight) ÷ sum(weights of available features)</code>. Feature risks themselves are not changed, and a missing feature counts neither as zero nor as maximum risk. The per-feature "weighted contribution" values use the original weights, so with missing features they add up to <code>score × total_weight_used</code>, not to the score.</samp>
+
+<samp><b>Single Source of Truth</b></samp>
+
+<samp>All weights, thresholds, categories and reason-code triggers live in <code>backend/app/scoring/thresholds.py</code>. The scoring engine evaluates those tables, <code>GET /api/config/scoring</code> and the Methodology page render them, and the tables in <code>docs/scoring-methodology.md</code> are generated from them (<code>python scripts/render_methodology.py</code>). Tests fail if any of these drift apart.</samp>
 
 ---
 
@@ -130,7 +139,7 @@ cd backend
 
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\\Scripts\\activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
 3. <samp>Install dependencies (use <code>requirements.txt</code> alone for production):</samp>
@@ -139,7 +148,7 @@ source venv/bin/activate  # On Windows: venv\\Scripts\\activate
 pip install -r requirements-dev.txt
 ```
 
-4. <samp>Optionally create a <code>.env</code> file (defaults work for local development):</samp>
+4. <samp>Create a <code>.env</code> file. The example sets <code>AUTH_DISABLED=true</code> so the local demo works without signing in. Without it, protected endpoints return 503 until authentication is configured (see <b>Authentication</b> below):</samp>
 
 ```bash
 cp .env.example .env
@@ -148,7 +157,7 @@ cp .env.example .env
 5. <samp>Run the server:</samp>
 
 ```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 --no-proxy-headers
 ```
 
 <samp>API: http://localhost:8000</samp>
@@ -167,21 +176,50 @@ npm run dev
 
 <samp>Frontend: http://localhost:5173</samp>
 
+<samp><b>Authentication</b></samp>
+
+<samp>Account data, analyses, the dashboard and CSV import require a bearer token. Health, the scoring methodology and <code>/api/auth/status</code> are public. There is one reviewer account, configured through environment variables. Its password is stored only as a salted scrypt hash, and tokens are HMAC-SHA256 signed and expire after <code>AUTH_TOKEN_TTL_MINUTES</code>. No credentials are built in. If authentication is neither configured nor explicitly disabled, protected endpoints answer <b>503</b> instead of serving data.</samp>
+
+```bash
+cd backend
+python -m app.security hash-password     # prompts twice; prints AUTH_PASSWORD_HASH
+python -m app.security generate-secret   # prints a value for AUTH_SECRET_KEY
+```
+
+<samp>Put <code>AUTH_USERNAME</code>, <code>AUTH_PASSWORD_HASH</code> and <code>AUTH_SECRET_KEY</code> in <code>backend/.env</code> (or the host's environment) and remove <code>AUTH_DISABLED</code>. The frontend then shows a sign-in page. The token is kept in <code>sessionStorage</code>, so it survives a reload but not closing the tab. Signing out discards it. There is no server-side revocation, so rotating <code>AUTH_SECRET_KEY</code> invalidates every issued token.</samp>
+
+<samp><b>Rate Limiting</b></samp>
+
+<samp>Per client IP, using a 60-second sliding window: 5 login attempts, 120 API requests and 10 CSV imports per minute by default. Over the limit, the API returns 429 with <code>Retry-After</code>. Limits are kept in memory per process, which suits the single-worker deployment; several workers or instances would each keep their own counters. By default the client IP is the TCP peer address, and <code>X-Forwarded-For</code> is trusted only when <code>TRUSTED_PROXY_HOPS</code> is set (see DEPLOYMENT_GUIDE.md). Start uvicorn with <code>--no-proxy-headers</code>, as in the commands in this guide; otherwise uvicorn itself may rewrite the client address from that header.</samp>
+
 <samp><b>Environment Variables</b></samp>
 
 | Variable | Where | Default | Description |
 |---|---|---|---|
-| <samp>DATABASE_URL</samp> | <samp>backend</samp> | <samp>sqlite:///./fakeguard.db</samp> | <samp>SQLAlchemy database URL</samp> |
+| <samp>DATABASE_URL</samp> | <samp>backend</samp> | <samp>sqlite:///./fakeguard.db</samp> | <samp>SQLAlchemy URL. <code>postgres://</code> / <code>postgresql://</code> URLs are accepted (psycopg 3)</samp> |
 | <samp>CORS_ORIGINS</samp> | <samp>backend</samp> | <samp>http://localhost:5173</samp> | <samp>Comma-separated allowed origins</samp> |
 | <samp>MAX_UPLOAD_BYTES</samp> | <samp>backend</samp> | <samp>5242880</samp> | <samp>Maximum CSV upload size</samp> |
+| <samp>AUTH_USERNAME</samp> | <samp>backend</samp> | <samp>unset</samp> | <samp>Reviewer username</samp> |
+| <samp>AUTH_PASSWORD_HASH</samp> | <samp>backend</samp> | <samp>unset</samp> | <samp>Output of <code>python -m app.security hash-password</code> (min. 12-character password)</samp> |
+| <samp>AUTH_SECRET_KEY</samp> | <samp>backend</samp> | <samp>unset</samp> | <samp>Token signing key, at least 32 characters</samp> |
+| <samp>AUTH_TOKEN_TTL_MINUTES</samp> | <samp>backend</samp> | <samp>480</samp> | <samp>Session lifetime</samp> |
+| <samp>AUTH_DISABLED</samp> | <samp>backend</samp> | <samp>false</samp> | <samp><code>true</code> opens every endpoint without sign-in. Local development only</samp> |
+| <samp>RATE_LIMIT_ENABLED</samp> | <samp>backend</samp> | <samp>true</samp> | <samp>Master switch for rate limiting</samp> |
+| <samp>RATE_LIMIT_LOGIN_PER_MINUTE</samp> | <samp>backend</samp> | <samp>5</samp> | <samp>Login attempts per IP (0 disables this limit)</samp> |
+| <samp>RATE_LIMIT_API_PER_MINUTE</samp> | <samp>backend</samp> | <samp>120</samp> | <samp>Protected API requests per IP</samp> |
+| <samp>RATE_LIMIT_IMPORT_PER_MINUTE</samp> | <samp>backend</samp> | <samp>10</samp> | <samp>CSV imports per IP</samp> |
+| <samp>TRUSTED_PROXY_HOPS</samp> | <samp>backend</samp> | <samp>0</samp> | <samp>Reverse proxies that append to <code>X-Forwarded-For</code>; 0 never trusts the header</samp> |
 | <samp>VITE_API_URL</samp> | <samp>frontend (build time)</samp> | <samp>unset</samp> | <samp>Backend origin, without <code>/api</code>. Leave unset in development (Vite proxies <code>/api</code>)</samp> |
 
 <samp><b>Running Tests and Checks</b></samp>
 
 ```bash
 cd backend
-pytest
+pytest                                    # in-memory SQLite
+python scripts/render_methodology.py --check
 ```
+
+<samp>To run the same suite against PostgreSQL, point <code>FAKEGUARD_TEST_DATABASE_URL</code> at a <b>throwaway</b> database whose name starts with <code>fakeguard_test</code> (its tables are dropped after every test). Set <code>FAKEGUARD_TEST_POSTGRES_URL</code> to a server URL to also run the PostgreSQL migration test.</samp>
 
 ```bash
 cd frontend
@@ -275,9 +313,17 @@ npm run build       # type-check + production build
 
 - <samp><code>POST /api/import/csv</code> — Multipart upload (field <code>file</code>). UTF-8 CSV with columns <code>username, age_days, followers, following, posts_per_day, profile_completeness, avg_likes, avg_comments</code> and optional <code>archetype</code>. Existing or duplicate usernames are skipped, invalid rows are reported, and each imported account gets an initial analysis. Max 5 MB by default</samp>
 
+<samp><b>Authentication</b></samp>
+
+- <samp><code>GET /api/auth/status</code> — Public. Whether sign-in is required and configured</samp>
+- <samp><code>POST /api/auth/login</code> — <code>{"username", "password"}</code> → <code>{"access_token", "token_type", "expires_at", "username"}</code> (rate limited)</samp>
+- <samp><code>GET /api/auth/me</code> — The signed-in user</samp>
+
+<samp>All Analysis, Accounts, Dashboard and Import endpoints require <code>Authorization: Bearer &lt;token&gt;</code>. They return 401 without a valid token, 429 when rate limited, and 503 when authentication is not configured.</samp>
+
 <samp><b>Configuration</b></samp>
 
-- <samp><code>GET /api/config/scoring</code> — Get scoring methodology</samp>
+- <samp><code>GET /api/config/scoring</code> — Public. Scoring methodology generated from <code>thresholds.py</code></samp>
 - <samp><code>GET /api/health</code> — Health check</samp>
 
 ---
@@ -345,7 +391,9 @@ npm run build       # type-check + production build
 - <samp>CSV uploads are size-limited and parsed with the standard library</samp>
 - <samp>CORS restricted to configured origins, without credentials</samp>
 - <samp>Internal database errors are not echoed to clients</samp>
-- <samp><b>No authentication:</b> anyone who can reach the API can read and import data. Run it locally or behind an access-controlled proxy, and add authentication and rate limiting before any real deployment</samp>
+- <samp>Bearer-token authentication on every data endpoint, failing closed (503) when not configured; scrypt password hash and HMAC-signed, expiring tokens; no default credentials</samp>
+- <samp>Per-IP rate limits on login, API and CSV import; <code>X-Forwarded-For</code> is ignored unless proxy hops are configured</samp>
+- <samp><b>Limitations:</b> a single shared reviewer account (no per-user audit trail or roles), no server-side token revocation, and in-memory rate limits that reset on restart. Authentication and rate limiting are verified by automated tests and locally; they have not been tested on a deployed Render instance</samp>
 
 ---
 

@@ -1,4 +1,4 @@
-"# FakeGuard Architecture
+# FakeGuard Architecture
 
 ## System Overview
 
@@ -293,4 +293,4 @@ Future improvements:
 - Fast development server
 - Modern build tool
 - Excellent HMR
-- Optimized production builds"
+- Optimized production builds

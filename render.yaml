@@ -1,0 +1,45 @@
+# Render Blueprint for the FakeGuard backend + PostgreSQL.
+#
+# Applying it (Render dashboard > New > Blueprint) creates NEW resources; it
+# does not modify a service you created manually. See DEPLOYMENT_GUIDE.md.
+#
+# Persistence: a "free" Render Postgres database expires 30 days after
+# creation (then a 14-day grace period before deletion) and has no backups.
+# Change the database plan to a paid one for data that must persist.
+databases:
+  - name: fakeguard-db
+    databaseName: fakeguard
+    user: fakeguard
+    plan: free
+
+services:
+  - type: web
+    name: fakeguard-backend
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    # --no-proxy-headers: client IPs for rate limiting are resolved by the app
+    # (TRUSTED_PROXY_HOPS), never by uvicorn trusting X-Forwarded-For.
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --no-proxy-headers
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.7
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fakeguard-db
+          property: connectionString
+      # Set in the dashboard when prompted (never commit real values).
+      - key: AUTH_USERNAME
+        sync: false
+      - key: AUTH_PASSWORD_HASH
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: AUTH_SECRET_KEY
+        generateValue: true
+      # Leave at 0 until the X-Forwarded-For chain has been verified
+      # (DEPLOYMENT_GUIDE.md, "Rate limiting behind Render's proxy").
+      - key: TRUSTED_PROXY_HOPS
+        value: "0"

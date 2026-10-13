@@ -1,4 +1,4 @@
-"# FakeGuard - Project Completion Report
+# FakeGuard - Project Completion Report
 
 **Date:** 2026-09-15  
 **Project:** Smart India Hackathon 2024 - PS14 Fake Social Media Account Risk Analyzer  
@@ -371,9 +371,9 @@ Frontend will run at: http://localhost:5173
 
 1. Open http://localhost:5173
 2. Navigate to Accounts page
-3. Click \"Choose CSV File\"
+3. Click "Choose CSV File"
 4. Select `backend/data/synthetic_accounts.csv`
-5. Click \"Import\"
+5. Click "Import"
 6. Wait for import to complete (~1000 accounts)
 
 ### Verify Installation
@@ -614,4 +614,4 @@ The project meets all requirements and is ready for immediate demonstration.
 ---
 
 **Report Generated:** 2026-09-15  
-**Status:** ✅ PROJECT COMPLETE"
+**Status:** ✅ PROJECT COMPLETE
