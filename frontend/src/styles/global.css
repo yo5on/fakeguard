@@ -242,3 +242,75 @@ input:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* UI polish pass: a clearer security-console hierarchy without changing risk semantics. */
+body {
+  background:
+    radial-gradient(ellipse at 88% 0%, rgba(37, 99, 235, 0.07), transparent 34rem),
+    var(--color-background);
+}
+.card,
+.stat-card,
+.chart-card,
+.top-accounts-card,
+.login-card {
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 14px;
+  box-shadow: 0 7px 24px rgba(15, 23, 42, 0.045);
+}
+.stat-card {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+@media (hover: hover) {
+  .stat-card:hover {
+    transform: translateY(-2px);
+    border-color: #cbdcf7;
+    box-shadow: 0 12px 26px rgba(37, 99, 235, 0.09);
+  }
+}
+.header {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.btn {
+  min-height: 40px;
+  transition: background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+.btn-primary:hover {
+  box-shadow: 0 5px 14px rgba(37, 99, 235, 0.18);
+  transform: translateY(-1px);
+}
+.input-group input,
+.input-group select,
+.input-group textarea,
+.search-input,
+.filter-select {
+  border-radius: 10px;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.input-group input:focus,
+.input-group select:focus,
+.input-group textarea:focus,
+.search-input:focus,
+.filter-select:focus {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.11);
+}
+th {
+  font-size: 0.75rem;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+tbody tr {
+  transition: background-color 140ms ease;
+}
+@media (max-width: 768px) {
+  .container { padding-inline: 14px; }
+  .card { padding: var(--spacing-md); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stat-card, .btn { transition: none; }
+  .stat-card:hover, .btn-primary:hover { transform: none; }
+}
